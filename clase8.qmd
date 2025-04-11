@@ -1,0 +1,375 @@
+---
+title: "Clase 8 - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+author: "José Rodríguez de la Fuente - Albano Vergara Parra"
+institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
+format: 
+  html:
+    theme: journal
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+    code-annotations: hover
+lang: es
+highlight-style: espresso
+lightbox: true
+cache: false
+bibliography: references.bib
+---
+
+# Graficando con `R`
+
+Una de las razones por las que muchas personas optan por utilizar lenguajes como `R` o `Python` para el análisis de datos es la posibilidad de generar gráficos de alta calidad de manera sencilla. Particularmente, `R` dispone de una variada cantidad de librerías para la generación de información gráfica que es digna de explorar. Cada una tiene su lógica y gramática propia.
+
+Una **gramática de gráficos** es un conjunto de reglas y principios que definen cómo construir e interpretar gráficos. Estas gramáticas permiten generar visualizaciones de datos de manera sistemática y flexible. En `R`, la librería `ggplot2` [@wickham2010] es la más utilizada para estos fines. La misma forma parte del paquete `tidyverse` y es una implementación de la gramática de gráficos de Wilkinson [@wilkinson2005].
+
+La idea de tener como fundamento una gramática es que iremos componiendo nuestros gráficos a partir de elementos independientes entre sí, sin tener que limitarnos a un número específico de gráficos predefinidos. `ggplot2` funciona en forma iterativa, es decir, iremos agregando capas de información a un gráfico básico, partiendo desde los datos crudos, hasta llegar a agregar geometrías y anotaciones. Veremos cómo esta forma de trabajo reducirá la distancia entre lo que pensamos y lo que finalmente queda en la visualización. De lo que se trata es de armar un gráfico sin hace un solo *point and click*, ni depender de nuestro pulso de artista.
+
+![Concepto de gramática de gráficos de Wilkinson](imagenes/grammar.jpg)
+
+Como se observa en esquema anterior, partiendo desde los datos con lo que contamos, podemos seis capas posibles para superponer y editar, dando forma a nuestro gráfico:  
+
+1. **Datos**: los datos que queremos visualizar.
+2. **Aesthetics**: cómo se mapean los datos a los elementos visuales. Qué ira al eje *x* y al eje *y*, que elementos diferenciaremos por color, forma, tamaño, etc.  
+3. **Elementos geométricos**: qué tipo de geompetrías utilizaremos. Pueden ser líneas, puntos, barras, polígonos, etc. O pueden ser combinaciones más complejas: boxplot, histogramas, mapas de calor, etc.  
+4. **Facetas**: cómo dividir los datos en subgráficos según alguna variable de interés.
+5. **Estadísticas**: cómo resumir los datos antes de graficarlos. Por ejemplo, contar los casos, ajustarlos a un modelo lineal, etc.  
+6. **Coordenadas**: sistema de coordenadas utilizado.
+7. **Temas**: aspecto visual del gráfico. Fuentes, tamaño de letra, títulos, subtítulos, etc. Hay temas predefinidos que ya vienen en la librería.  
+
+Con esta breve introducción, estamos en condiciones de construir nuestro primer gráfico en `R`.  
+
+## Recursos a explorar 
+
+La web está llena de ejemplos e ideas que nos pueden inspirar para construir nuestros gráficos. Una buena página para explorar es [R Graph Gallery](https://www.r-graph-gallery.com/). Allí encontraremos una gran cantidad de ejemplos de gráficos realizados con `R`, con el código fuente para replicarlos. Además, propone una buena clasificación de los gráficos según su tipo, lo que nos puede ayudar a encontrar rápidamente el tipo de gráfico que necesitamos.
+
+Particularmente sobre `ggplot2`, sería recomendable que consulten el siguiente material:
+
+- [R para Ciencia de Datos](https://es.r4ds.hadley.nz/03-visualize.html){target="_blank"}: en el capítulo 3 del libro encontrarán una breve guía para trabajar con `ggplot2`.
+
+- [ggplot2: Elegant Graphics for Data Analysis](https://ggplot2-book.org/){target="_blank"}: este es el libro oficial de `ggplot2`, escrito por Hadley Wickham, su creador. En el sitio encontrarán una versión online del libro, con ejemplos y explicaciones detalladas.  
+
+- [Machete de ggplot2](https://rstudio.github.io/cheatsheets/translations/spanish/data-visualization_es.pdf): una guía rápida con los principales comandos de `ggplot2`.
+
+
+Otra fuente similar a la anterior es [Data to Viz](https://www.data-to-viz.com/), donde también encontraremos una guía para elegir el tipo de gráfico adecuado según los datos que tengamos.
+
+Por otro lado, existen dos librerías que no exploraremos en el seminario pero que son de gran interés:  
+
+- `plotly`: permite generar gráficos interactivos. [https://plotly.com/r/](https://plotly.com/r/) 
+- `gganimate`: permite generar gráficos animados. [https://gganimate.com/](https://gganimate.com/)
+
+
+
+## Librerías y bases que utilizaremos
+
+Vamos a instalar estas librerías:
+
+```{r message=FALSE, warning=FALSE, eval=FALSE}
+install.packages("scales")
+```
+
+Vamos a activar las siguientes librerías:
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(scales)
+```
+
+Vamos a cargar las bases de datos que utilizaremos:
+
+```{r message=FALSE, warning=FALSE}
+censo_hogares <- read_csv2("bases/censo10_hogares.csv")
+
+censo_personas <- readRDS("bases/censo10_personas.rds")
+```
+
+Para la construcción de los gráficos vamos a transformar algunas variables a factor:
+
+```{r message=FALSE, warning=FALSE}
+censo_personas <- censo_personas %>% 
+  mutate(sexo = factor(p02, labels = c("Varón", "Mujer")),
+         condact_f = factor(condact, labels = c("No aplica", "Ocupado", "Desocupado", "Inactivo")),
+         provincia_f = factor(provincia, labels = c(
+           "Ciudad Autónoma de Buenos Aires",
+           "Buenos Aires",
+           "Catamarca",
+           "Córdoba",
+           "Corrientes",
+           "Chaco",
+           "Chubut",
+           "Entre Ríos",
+           "Formosa",
+           "Jujuy",
+           "La Pampa",
+           "La Rioja",
+           "Mendoza",
+           "Misiones",
+           "Neuquén",
+           "Río Negro",
+           "Salta",
+           "San Juan",
+           "San Luis",
+           "Santa Cruz",
+           "Santa Fe",
+           "Santiago del Estero",
+           "Tucumán",
+           "Tierra del Fuego, Antártida e Islas del Atlántico Sur")))
+```
+
+
+
+## Construyendo el primer gráfico paso a paso 
+
+Vamos a comenzar construyendo un gráfico sencillo, pero lo haremos paso a paso, para que luego podamos ir agregando complejidad en su composición. Vamos a trabajar sobre la base de personas del censo 2010, tomando como variable de interés la edad (`p03`). El primer paso será llamar a la función `ggplot()` y pasarle como argumento la base de datos sobre la que queremos graficar.  
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas)
+
+```
+
+Esto nos devolverá como resultado, una hoja en blanco, ya que no le hemos indicado qué queremos graficar. Entonces, el siguiente paso será indicarle qué variable queremos graficar. Para ello, utilizaremos la función `aes()`, que nos permite mapear las variables de la base de datos a los elementos visuales del gráfico. En este caso, le pasaremos a `aes()` la variable `p03`.  
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas, aes(x = p03))
+
+```
+Ahora el gráfico se va llenando. Ha aparecido la escala del eje *x* referida a la edad de las personas. Pero aún no hemos indicado qué queremos hacer con esa variable. Para ello, vamos a agregar una capa geométrica, en este caso, le pediremos que grafique un histograma. 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas, aes(x = p03)) +
+  geom_histogram()
+
+```
+::: {.callout-tip title="Atención"}
+Fijense que de forma similar al `%>%` de `dplyr`, en `ggplot2` utilizamos el `+` para ir agregando capas al gráfico. Es común que nos confundamos entre ambos operadores, pero con la práctica, iremos adquiriendo la costumbre de utilizarlos correctamente. 
+:::
+
+Dentro de la capa de geometría, podemos agregar argumentos que nos permitan personalizar el gráfico. Por ejemplo, cambiemos el color de las barras mediante la opción `fill` y el tamaño mediante la función `binwidth`. Pueden explorar las distintas formas de identificar las colores en este [sitio](https://r-graph-gallery.com/ggplot2-color.html).
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas, aes(x = p03)) +
+  geom_histogram(fill = "skyblue", binwidth = 2)
+```
+Ahora el gráfico se ve algo mejor. Ahora veamos el tema de la escala, ¿Cómo podemos hacer para cambiar los intervalos y los límites tanto en el eje x como en el y. Vamos a utilizar las capas de *escalas* mediante las funciones `scale_x_continuous()` y `scale_y_continuous()`. Dentro de estas funciones, podemos indicar los intervalos (*breaks*) y los límites (*limits*) que queremos para cada eje. 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas, aes(x = p03)) +
+  geom_histogram(fill = "skyblue", binwidth = 2) +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 1500000, 100000), limits = c(0, 1500000))
+```
+
+La opción `breaks = seq(0, 100, 10)` indica que queremos que los intervalos en el eje *x* sean de 10 en 10, desde 0 hasta 100. La opción `limits = c(0, 100)` indica que los límites del eje *x* serán de 0 a 100. De forma similar, para el eje *y*, los intervalos serán de 100.000 en 100.000, desde 0 hasta 1.500.000. Los límites del eje *y* serán de 0 a 1.500.000.
+
+Ahora bien, para cerrar nuestro primer gráfico, vamos a agregarle un título y etiquetas a los ejes. Para ello, utilizaremos la función `labs()`. A su vez, podemos también modificar el tema visual del gráfico mediante la función `theme()`. Seleccionaremos el tema *minimal* mediante la capa `theme_minimal()`.  
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas, aes(x = p03)) +
+  geom_histogram(fill = "skyblue", binwidth = 2) +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 1500000, 100000), limits = c(0, 1500000)) +
+  labs(title = "Distribución de las personas según edad",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Edad",
+       y = "Cantidad de personas") +
+  theme_minimal()
+```
+
+Si queremos exportar el gráfico a un archivo, para luego utilizarlo en algún documento o compartirlo, podemos hacerlo mediante la función `ggsave()`. Esta función nos permite guardar el gráfico en distintos formatos, como `pdf`, `png`, `jpeg`, `tiff`, entre otros. Pero antes debemos asignar al gráfico a un... objeto. Probemos.
+
+```{r message=FALSE, warning=FALSE}
+grafico <- ggplot(data = censo_personas, aes(x = p03)) +
+  geom_histogram(fill = "skyblue", binwidth = 2) +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 1500000, 100000), limits = c(0, 1500000)) +
+  labs(title = "Distribución de las personas según edad",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Edad",
+       y = "Cantidad de personas") +
+  theme_minimal()
+
+ggsave("resultados/distribucion_edad_personas.jpg", plot = grafico, width = 10, height = 6, dpi = 300)
+```
+
+
+## Observando diferencias por grupos  
+
+Siguiendo con el gráfico que fuimos contruyendo, vamos a ver como hacer para comparar la distribución por edad según sexo. Para ello, vamos a utilizar la variable `p02`. El principal cambio que vamos a generar en nuestras capas es que en la opción *fill* de la capa `aes()` vamos a indicar que queremos diferenciar por sexo.  
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = censo_personas, aes(x = p03, fill = sexo)) +
+  geom_histogram(binwidth = 2, position = "identity") +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 800000, 100000), limits = c(0, 800000)) +
+  labs(title = "Distribución de las personas según edad",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Edad",
+       y = "Cantidad de personas") +
+  theme_minimal()
+```
+
+Podríamos mejorar la gráfica retocando las siguientes opciones:
+
+- Cambiar el color de las barras utilizando la función `scale_fill_manual()`.
+- Modificar la transparencia de las barras mediante la opción *alpha* en `geom_histogram`.
+- Evitar la notación científica en el eje y mediante la capa `scale_y_continuous()` y la opción `labels = scales::label_number_auto()` .
+
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data=censo_personas, aes(x = p03, fill = sexo)) +
+  geom_histogram(binwidth = 2, position = "identity", alpha = 0.4) +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 800000, 100000), limits = c(0, 800000),
+                     labels = scales::label_number_auto()) +
+  labs(title = "Distribución de las personas según edad y sexo",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Edad",
+       y = "Cantidad de personas") +
+  theme_minimal() +
+  scale_fill_manual(values = c("coral", "darkorchid")) +
+  theme(legend.title = element_blank())
+```
+
+Otra forma de evaluar las diferenciaciones por grupos es mediante *facetados*. Vamos a ver cómo hacer para que el gráfico se divida en dos paneles, uno para cada sexo. Para ello, vamos a utilizar la función `facet_wrap()` y le pasaremos como argumento la variable `sexo`.  
+
+```{r message=FALSE, warning=FALSE}
+ggplot(censo_personas, aes(x = p03)) +
+  geom_histogram(binwidth = 2, fill = "coral") +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+  scale_y_continuous(breaks = seq(0, 800000, 100000), limits = c(0, 800000),
+                     labels = scales::label_number_auto()) +
+  labs(title = "Distribución de las personas según edad y sexo",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Edad",
+       y = "Cantidad de personas") +
+  theme_minimal() +
+  facet_wrap(~sexo)
+```
+## Los gráficos de barras 
+
+Uno de los gráficos más utilizados en ciencias sociales para observar la distribución de las variables categóricas son los gráficos de barras. Por ejemplo, podemos construir un gráfico que nos muestre como se distribuye la población según su condición de actividad (`condact_f`). 
+
+Como vamos a querer que los valores del eje y se presenten en porcentajes, primero vamos a calcular la proporción de personas en cada categoría. Para ello, utilizaremos la función `count()` de `dplyr` y luego dividiremos por la cantidad total de personas. También quitaremos del calculo a las personas que no aplican a la condición de actividad. Asignemos la tabla de salida al objeto *condicion*.
+
+```{r}
+condicion <- censo_personas %>% 
+  filter(condact_f != "No aplica") %>% 
+  count(condact_f) %>%
+  mutate(prop = n / sum(n)) 
+```
+
+Ahora estamos en condiciones de probar la función `geom_bar` para construir un gráfico de barras. Es importante declarar `stat = "identity"` para que las barras se muestren en función de la proporción de personas en cada categoría. 
+
+
+```{r}
+ggplot(data = condicion, aes(x = condact_f, y = prop)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Distribución de la población según condición de actividad",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Condición de actividad",
+       y = "Proporción de personas") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+Ahora bien, existen otros formatos de gráficos de barras que nos permiten representar un cruce de variables, tal cómo lo hicimos en la clase anterior al elaborar tablas de contingencia. Por ejemplo, podemos construir un gráfico de barras agrupadas que nos muestre la distribución de la población según condición de actividad y sexo. Para ello, vamos a pasar en la capa `aes()` en la opción `fill`, la variable `sexo`. Al mismo tiempo, en la capa `geom_bar` indicaremos la opción `position = "dodge"`. 
+
+```{r message=FALSE, warning=FALSE}
+condicion_sexo <- censo_personas %>% 
+  filter(condact_f != "No aplica") %>% 
+  count(condact_f, sexo) %>%
+  group_by(condact_f) %>%
+  mutate(prop = n / sum(n))
+
+ggplot(data = condicion_sexo, aes(x = condact_f, y = prop, fill = sexo)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Distribución de la población según condición de actividad y sexo",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Condición de actividad",
+       y = "Proporción de personas") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent_format())
+```
+
+La otra opción es utilizar *barras apiladas*. Para ello, en la capa `geom_bar` indicaremos la opción `position = "fill"`. 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = condicion_sexo, aes(x = condact_f, y = prop, fill = sexo)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Distribución de la población según condición de actividad y sexo",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Condición de actividad",
+       y = "Proporción de personas") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent_format())
+
+```
+
+Si además queremos agregar una capa de texto con el valor de la proporción de personas en cada categoría, podemos hacerlo mediante la función `geom_text()`. En esta función, le pasaremos como argumento la opción `label = scales::percent(prop)`, que nos permitirá mostrar el valor de la proporción en formato porcentaje. 
+
+```{r message=FALSE, warning=FALSE}
+ggplot(data = condicion_sexo, aes(x = condact_f, y = prop, fill = sexo)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(prop)), position = position_fill(vjust = 0.5)) +
+  labs(title = "Distribución de la población según condición de actividad y sexo",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Condición de actividad",
+       y = "Proporción de personas") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent_format())
+
+```
+
+Los gráficos de barras apiladas son un recurso importante para comparar proporciones entre grupos. Sin embargo, es importante tener en cuenta que a medida que aumenta la cantidad de grupos, la lectura de los gráficos se vuelve más compleja. Por ello, es importante tener en cuenta el objetivo de la visualización y la cantidad de grupos a comparar. Aun así, siempre está la opción de girar las coordenadas del gráfico. Por ejemplo, hagamos una prueba calculando las proporciones de personas según condición de actividad pero segun la provincia de residencia.
+
+```{r}
+condicion_provincia <- censo_personas %>% 
+  filter(condact_f != "No aplica") %>% 
+  group_by(provincia_f, condact_f) %>%
+  tally() %>% 
+  group_by(provincia_f) %>%
+  mutate(prop = n / sum(n))
+
+ggplot(data = condicion_provincia, aes(x = provincia_f, y = prop, fill = condact_f)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), position = position_fill(vjust = 0.5), size = 2) +
+  labs(title = "Distribución de la población según condición de actividad y provincia de residencia",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Condición de actividad",
+       y = "Proporción de personas",
+       fill = "Condición de actividad") +
+  theme_minimal() +
+  scale_y_continuous(labels = scales::percent_format()) +
+  coord_flip()
+```
+
+Si bien el gráfico se comprende, aún podemos hacerle algunas mejorar. Marcaremos los cambiamos que agregamos en el código:
+
+```{r}
+ggplot(data = condicion_provincia, aes(x = provincia_f, y = prop, fill = condact_f)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), position = position_fill(vjust = 0.5), size = 2) +
+  labs(title = "Distribución de la población según condición de \nactividad y provincia de residencia",
+       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
+       x = "Condición de actividad",
+       y = "Proporción de personas",
+       fill = "Condición de actividad") +
+  theme_minimal() +
+  theme(legend.position = "bottom", #Cambiamos la posición de la leyenda
+        legend.title = element_blank(), #Quitamos el título de la leyenda
+        axis.title.y = element_blank(), #Quitamos el título del eje y
+        axis.title.x = element_blank(), #Quitamos el título del eje x
+        axis.text.y = element_text(size = 7), #Cambiamos el tamaño de la fuente del eje y
+        title = element_text(size = 10)) + #Cambiamos el tamaño de la fuente del título
+  scale_y_continuous(labels = scales::percent_format()) +
+  coord_flip()
+```
+
+
+
