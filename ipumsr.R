@@ -1,12 +1,12 @@
 library(ipumsr)
 library(tidyverse)
 
-ipums_data_collections() #Les permite observar las colecciones que tiene IPUMS
+coleccciones <- ipums_data_collections() #Les permite observar las colecciones que tiene IPUMS
 
 ##################### ACA VA UN TOKEN PERSONAL PARA QUE FUNCIONE LA API #######
 
 # Save key in .Renviron for use across sessions
-# set_ipums_api_key("59cba10d8a5da536fc06b59d077f16ab8c694a48af40579e2f934f33", save = TRUE)
+set_ipums_api_key("59cba10d8a5da536fc06b59d077f16ab8c694a48af40579e2f934f33", save = TRUE)
 
 
 ################################################################################
@@ -16,7 +16,7 @@ ipumsi_samps <- get_sample_info("ipumsi") #Ver nombres de las bases censales
 # Cargo la data
 ipumsi_extract <- define_extract_ipumsi(
   description = "Extract definition with predefined variables",
-  samples = "co1973a",
+  samples = "ar1970a",
   variables = c("SEX", "RELATE", "AGE2")
 )
 
