@@ -102,7 +102,7 @@ nombres <- read_csv("https://datosabiertos.renaper.gob.ar/nombres_propios_frecue
 DT::datatable(nombres)
 ```
 
-## Bonus track: Librerías de descarga de datos
+## Librerías de descarga de datos
 
 Para algunas bases de datos, principalmente aquellas que se realizan con cierta frecuencia en el tiempo, existen paquetes específicos elaborados por usuarios o instituciones oficiales que permiten descargar los datos en forma, más o menos automática.
 
@@ -114,61 +114,88 @@ Algunos de estos paquetes solicitan acceso a una API (*Application Programming I
 
 -   [`PNADcIBGE`](https://cran.r-project.org/web/packages/PNADcIBGE/index.html){target="_blank"}: permite la descarga de datos de la Pesquisa Nacional por Amostra de Domicílios (PNAD) de Brasil.  
 
+-   [`WDI`](https://cran.r-project.org/web/packages/WDI/index.html){target="_blank"}: permite la descarga de datos del Banco Mundial.  
+
+-   [`Rilostat`](https://cran.r-project.org/web/packages/Rilostat/index.html){target="_blank"}: permite la descarga de datos de la Organización Internacional del Trabajo (OIT).  
 
 
+### La librería `eph`  
+
+La librería `eph`^[Carolina Pradier, Guido Weksler, Pablo Tiscornia, Natsumi Shokida, Germán Rosati, & Diego Kozlowski. (2023). ropensci/eph V1.0.0 (1.0.0). Zenodo. https://doi.org/10.5281/zenodo.8352221] es un paquete de `R` que permite descargar los datos de la Encuesta Permanente de Hogares (EPH) de Argentina. Esta encuesta es una fuente fundamental para el estudio del mercado laboral y las condiciones de vida en el país. El paquete `eph` facilita la descarga de los datos, la construcción de paneles y pools de datos, y la estimación de pobreza.  
+
+Vamos a utilizarla para descargar algún trimestre de la EPH que utilizaremos como ejemplo. Para ello, primero debemos instalar el paquete y luego cargarlo.  
+
+```{r eval=FALSE}
+install.packages("eph")
+```
+
+```{r}
+library(eph)
+```
+
+Ya instalado y activado el paquete, podemos consultar en la guía de usuario del mismo las distintas funciones que tiene. Utilizaremos la función `get_microdata()` para descargar los microdatos de la EPH. Por ejemplo, si queremos descargar los datos del cuarto cuatrimestre de 2024, debemos específicar los parámetros *year*, *period* y *type*. Ya que necesitamos "guardar" la base en algún lado, vamos a asignarsela a un objeto que se llamará eph_2024.  
+
+```{r}
+eph_2024 <- get_microdata(year = 2024, period = 4, type = "hogar")
+```
+Si todo salió bien, en el *ambiente de trabajo* vamos a visualizar un nuevo objeto llamado *eph_2024*.  
 
 
 # Elementos de la base datos
 
 ## Clases de objetos
 
-Una vez abiertas las bases de datos, el siguiente paso que solemos dar es abrirla y observar como está dispuesta la matriz de datos. En el caso de `RStudio`, a diferencia de **SPSS**, las bases de datos se mantienen ocultas en el ambiente de trabajo. Para visualizarlas, podemos hacer *click* en el objeto específico, o si queremos un resumen, podemos escribir el nombre del objeto en la consola o en el *script*. 
+Una vez incorporada la base, el siguiente paso que solemos dar es observar cómo está dispuesta la matriz de datos. En el caso de `RStudio`, a diferencia de **SPSS**, las bases de datos se mantienen ocultas en el ambiente de trabajo. Para visualizarlas, podemos hacer *click* en el objeto específico, o si queremos un resumen, podemos escribir el nombre del objeto en la consola o en el *script*. 
 
 ```{r}
-censo_hogares
+eph_2024
 ```
 
 
-Como bien hemos visto, en el objeto *censo_hogares*, se puede observar la estructura tripartita del dato. En las filas se disponen los hogares, en las columnas las variables y en las celdas los valores de las variables para cada hogar. Cada hogar cuenta con un identificador único, que en este caso es la variable `hogar_ref_id`. Esto refleja que la información se encuentra ordenada, o como se suele decir, en un formato *tidy*. Como veremos a continuación, paquetes estrella como `dplyr`, `ggplot2` y el resto de los del `tidyverse` están diseñados para trabajar con datos ordenados. 
+Como bien hemos visto, en el objeto *eph_2024*, se puede observar la estructura tripartita del dato. En las filas se disponen los hogares, en las columnas las variables y en las celdas los valores de las variables para cada hogar. Cada hogar tiene una identificación única conformada por la variable `CODUSU` (identificador de vivienda) y `NRO_HOGAR`. Esto refleja que la información se encuentra ordenada, o como se suele decir, en un formato *tidy*. Como veremos a continuación, paquetes estrella como `dplyr`, `ggplot2` y el resto de los del `tidyverse` están diseñados para trabajar con datos ordenados. 
 
-Otra cuestión relevante es que las variables pueden ser de distintos tipos. Por ejemplo, algunas variables son numéricas, otras son categóricas y otras son de texto. Para saber qué tipo de variable es cada una, podemos usar la función `class()`. Por ejemplo, la variable `TOTPERS` es numérica, y cuenta la cantidad de personas que hay en el hogar. Mientras que la variable `provincia` es cadena, ya que almacena el nombre de las provincias en formato texto.
+Otra cuestión relevante es que las variables pueden ser de distintos tipos. Por ejemplo, algunas variables son numéricas, otras son categóricas y otras son de texto. Para saber qué tipo de variable es cada una, podemos usar la función `class()`. Por ejemplo, la variable `IX_TOT` es numérica, y cuenta la cantidad de personas que hay en el hogar. Mientras que la variable `CODUSU` es cadena, ya que almacena números y letras.
 
 ```{r}
-class(censo_hogares$TOTPERS)
-class(censo_hogares$provincia)
+class(eph_2024$IX_TOT)
+class(eph_2024$CODUSU)
 ```
 
 ::: {.callout-tip title="Atención"}
-En la línea de código escrita recién podemos ver que para señalar a una variable en una base de datos, utilizando `R base` se utiliza el símbolo *$*. Esto indica que estamos apuntando a una columna determinada del objeto especificado. El autocompletado es una gran ventaja cuando necesitamos identificar alguna columna.
+En la línea de código escrita recién podemos ver que para señalar a una variable en una base de datos, en `R base`, se utiliza el símbolo *$*. Esto indica que estamos apuntando a una columna determinada del objeto especificado. El autocompletado es una gran ventaja cuando necesitamos identificar alguna columna.
 :::
 
-Al observar la clase del objeto `censo_hogares`, podemos ver que es un *data.frame*, específicamente en formato *tibble*. Este es el tipo de objeto que se utiliza en `R` para almacenar bases de datos de estructura tabular.
+Al observar la clase del objeto `eph_2024`, podemos ver que es un *data.frame*, específicamente en formato *tibble*. Este es el tipo de objeto que se utiliza en `R` para almacenar bases de datos de estructura tabular.
 
 ```{r}
-class(censo_hogares)
+class(eph_2024)
 ```
 
 ## Los factores
 
-Hemos señalado anteriormente que otro tipo de variables son aquellas que son categóricas. En `R`, estas variables son conocidas como *factores* y tienen la particularidad que tienen un conjunto conocido de valores posibles y sobre los cuales puede establecerse un orden. Su diferenciación, respecto a otros tipos de objetos como los *character* o *numeric*, radica en que algunos análisis estadísticos más avanzados requieren que las variables categóricas sean tratadas como factores.  
+En `R`, las variables categóricas son conocidas como *factores* y tienen la particularidad de tener un conjunto conocido de valores posibles y sobre los cuales puede establecerse un orden. Su diferenciación, respecto a otros tipos de objetos como los *character* o *numeric*, radica en que algunos análisis estadísticos más avanzados requieren que las variables categóricas sean tratadas como factores.  
 
-Por ejemplo, en la base de hogares contamos con la variable `PROP`, que indica el régimen de tenencia de la vivienda y del terreno en el que vive el hogar. Si bien la variable fue cargada como numérica, sabemos que, en realidad, es una variable categórica. Para convertirla en factor, usamos la función `factor()`, en donde, además, podemos declarar las distintas etiquetas (*labels*) que tienen las categorías. Para no sobreescribir la variable original, la guardamos en una nueva variable llamada `prop_factor`.
+Por ejemplo, en la base de hogares contamos con la variable `II7`, que indica el régimen de tenencia de la vivienda y del terreno en el que vive el hogar. Si bien la variable fue cargada como numérica, sabemos que, en realidad, es una variable categórica. Para convertirla en factor, usamos la función `factor()`, en donde, además, podemos declarar las distintas etiquetas (*labels*) que tienen las categorías. Para no sobreescribir la variable original, la guardamos en una nueva variable llamada `prop_factor`.
 
 ```{r}
-censo_hogares$prop_factor <- factor(censo_hogares$PROP, 
+eph_2024$tenencia <- factor(eph_2024$II7, 
                                     labels = c("No aplica",
-                                               "Propietario de la vivienda y del terreno",
+                                               "Propietario de la vivienda y el terreno",
                                                "Propietario sólo de la vivienda",
-                                               "Inquilino",
-                                               "Ocupante por préstamo",
-                                               "Ocupante por trabajo",
+                                               "Inquilino/arrendatario de la vivienda",
+                                               "Ocupante por pago de impuestos/expensas",
+                                               "Ocupante en relación de dependencia",
+                                               "Ocupante gratuito (con permiso)",
+                                               "Ocupante de hecho (sin permiso)",
+                                               "Está en sucesión",
                                                "Otra situación"))
+
 ```
 
-Con la función `levels()` podemos ver los niveles que tiene la variable `prop_factor`, es decir, como están ordenadas las categorías.
+Con la función `levels()` podemos ver los niveles que tiene la variable `tenencia`, es decir, como están ordenadas las categorías.
 
 ```{r}
-levels(censo_hogares$prop_factor)
+levels(eph_2024$tenencia)
 ```
 
 
@@ -178,28 +205,31 @@ Las variables de tipo *factor* son una de las principales diferencias existentes
 
 # Organizando datos y variables: selecciones, filtros y orden
 
-Luego de importar los datos con los que trabajaremos y de haberlos inspeccionado, lo siguiente consiste en organizarlos para posteriormente poder transformarlos, analizarlos e interpretarlos. En este apartado, veremos cómo seleccionar, filtrar y ordenar los datos, basandonos en el ecosistema de funciones que nos provee el paquete `dplyr`^[[*Machete*](https://rstudio.github.io/cheatsheets/translations/spanish/data-transformation_es.pdf){target="_blank"} del paquete `dplyr`] de `tidyverse`. Fundamentalmente, revisaremos las funciones `select()`, `filter()` y `arrange()`.  
+Luego de importar los datos con los que trabajaremos y de haberlos inspeccionado, lo siguiente consiste en organizarlos para posteriormente poder transformarlos, analizarlos e interpretarlos. En este apartado, veremos cómo seleccionar, filtrar y ordenar los datos, basándonos en el ecosistema de funciones que nos provee el paquete `dplyr`^[[*Machete*](https://rstudio.github.io/cheatsheets/translations/spanish/data-transformation_es.pdf){target="_blank"} del paquete `dplyr`] de `tidyverse`. Fundamentalmente, revisaremos las funciones `select()`, `filter()` y `arrange()`.  
+
+Como lo indica su [página web](https://dplyr.tidyverse.org/){target="_blank"}, `dplyr` es una *gramática* de manipulación de datos basado en un conjunto de verbos que permiten realizar las tareas más comunes de manipulación de datos. Estos verbos son intuitivos y fáciles de recordar, lo que facilita su uso.  
+
 
 ## Selección de variables
 
-A menudo trabajamos con bases de datos provenientes de registros o encuestas que contienen una gran cantidad de variables. En estos casos, es común que no todas las variables sean de interés para el análisis que queremos realizar. Otras veces, como en nuestro caso, disponemos de bases de datos, como el censo, que cuenta con una gran cantidad de filas más que de columnas. Así mismo, seleccionar algunas de las variables con las que vamos a trabajar es una buena opción para reducir el tamaño de la base de datos y facilitar su manipulación y guardado.
+A menudo trabajamos con bases de datos provenientes de registros o encuestas que contienen una gran cantidad de variables. En estos casos, es común que no todas las variables sean de interés para el análisis que queremos realizar. Otras veces, como en nuestro caso, disponemos de bases de datos, como en las encuestas de hogares, que cuentan con una mayor cantidad de filas que de columnas. Así mismo, seleccionar algunas de las variables con las que vamos a trabajar es una buena opción para reducir el tamaño de la base de datos y facilitar su manipulación y guardado.
 
-Supongamos que quisieramos generar un nuevo objeto que contenga solo las variables `redcode`, `provincia`, `hogar_ref_id` y la variable factor `prop_factor`. Para ello, utilizamos la función `select()` y le pasamos como argumento el objeto de la base de datos y las variables que queremos seleccionar, generando un nuevo objeto que se llame **censo_hogares_seleccion**. 
+Supongamos que quisieramos generar un nuevo objeto que contenga solo las variables `CODUSU`, `NRO_HOGAR`, `REGION` y la variable factor `tenencia`. Para ello, utilizamos la función `select()` y le pasamos como argumento el objeto de la base de datos y las variables que queremos seleccionar, generando un nuevo objeto que se llame **eph_2024_seleccion**. 
 
 ```{r}
-censo_hogares_seleccion <- select(censo_hogares, redcode, provincia, hogar_ref_id, prop_factor)
+eph_2024_seleccion <- select(eph_2024, CODUSU, NRO_HOGAR, REGION, tenencia)
 ```
 
-Fijense en el ambiente de trabajo, que el nuevo objeto tiene las mismas observaciones que el objeto original, pero solo tiene las variables que seleccionamos. La función `select()` acepta también incluir rangos de variables, mediante el operador `:`. Por ejemplo, si quisiéramos seleccionar las variables `redcode` a `hogar_ref_id`, podríamos hacerlo de la siguiente manera. Sobreescribimos el objeto **censo_hogares_seleccion** para que contenga las variables seleccionadas.
+Fijense en el ambiente de trabajo, que el nuevo objeto tiene las mismas observaciones que el objeto original, pero solo tiene las variables que seleccionamos. La función `select()` acepta también incluir rangos de variables, mediante el operador `:`. Por ejemplo, si quisiéramos seleccionar las variables `CODUSU` a `PONDERA`, podríamos hacerlo de la siguiente manera. Sobreescribimos el objeto **eph_2024_seleccion** para que contenga las variables seleccionadas.
 
 ```{r}
-censo_hogares_seleccion <- select(censo_hogares, redcode:hogar_ref_id)
+eph_2024_seleccion <- select(eph_2024, CODUSU:PONDERA)
 ```
 
-Otra forma de seleccionar variables es a través del operador `-`, que nos permite excluir variables. Por ejemplo, si quisiéramos seleccionar todas las variables excepto `provincia`, podríamos hacerlo de la siguiente manera.
+Otra forma de seleccionar variables es a través del operador `-`, que nos permite excluir variables. Por ejemplo, si quisiéramos seleccionar todas las variables excepto `MAS_500`, podríamos hacerlo de la siguiente manera.
 
 ```{r}
-censo_hogares_seleccion <- select(censo_hogares, -provincia)
+eph_2024_seleccion <- select(eph_2024, -MAS_500)
 ```
 
 La función, como todas las del paquete `dplyr`, es muy flexible y permite realizar selecciones de variables de forma muy sencilla. Recomendamos inspeccionar la misma mediante el comando `?select`.
@@ -209,43 +239,43 @@ La función, como todas las del paquete `dplyr`, es muy flexible y permite reali
 
 Si con `select` seleccionamos variables, con `filter` seleccionamos casos. Es decir, filtramos las observaciones que cumplen con ciertas condiciones. Para esto es necesario conocer los operadores lógicos y relacionales que vimos en la clase anterior.
 
-Por ejemplo, si sobre el objeto `censo_hogares` quisiéramos seleccionar solo los hogares de la provincia de Mendoza, podríamos hacerlo de la siguiente manera.  
+Por ejemplo, si sobre el objeto `eph_2024` quisiéramos seleccionar solo los hogares de la provincia de la región Noroeste (40), podríamos hacerlo de la siguiente manera.  
 
 ```{r}
-censo_hogares_seleccion <- filter(censo_hogares, provincia == "MENDOZA")
+eph_2024_seleccion <- filter(eph_2024, REGION == 40)
 
 ```
 
-Vemos que en total, la provincia de Mendoza, cuenta con `r nrow(censo_hogares_seleccion)` hogares.  
+Vemos que en total, la región Noroeste, cuenta con `r nrow(eph_2024_seleccion)` hogares.  
 
 Otro ejemplo que podemos aplicar sobre la base de hogares, es quedarnos con aquellos hogares que tienen más de un miembro, o, en otras palabras, que no son unipersonales. Para ello, utilizamos el operador `!=` que significa distinto.  
 
 ```{r}
-censo_hogares_seleccion <- filter(censo_hogares, TOTPERS != 1)
+eph_2024_seleccion <- filter(eph_2024, IX_TOT != 1)
 
 ```
 
-También podríamos combinar ambos filtros, seleccionando hogares de Mendoza que no sean unipersonales, usando el operador lógico *&*.
+También podríamos combinar ambos filtros, seleccionando hogares del Noroeste que no sean unipersonales, usando el operador lógico *&*.
 
 ```{r}
-censo_hogares_seleccion <- filter(censo_hogares, provincia == "MENDOZA" & TOTPERS != 1)
+eph_2024_seleccion <- filter(eph_2024, REGION == 40 & IX_TOT != 1)
 ```
 
 Las posibilidades son infinitas y dependiendo del filtro que querramos aplicar las expresiones lógico-relacionales pueden ser más o menos complejas.  
 
 ::: {.callout-warning title="Cuidado"}
-No confundir el operador lógico **==** con el operador de asignación *=*. El primero se utiliza para comparar valores, mientras que el segundo se utiliza para asignar valores a una variable. En `SPSS` se utiliza el operador **=** para ambos casos. 
+No confundir el operador lógico **==** con el operador de asignación **=**. El primero se utiliza para comparar valores, mientras que el segundo se utiliza para asignar valores a una variable. En `SPSS` se utiliza el operador **=** para ambos casos. 
 :::
 
 
 ## Ordenando los datos
 
-Por último, la función `arrange()` nos permite ordenar los datos de acuerdo a una o más variables. Por ejemplo, si quisiéramos ordenar los hogares de la provincia de Mendoza de acuerdo a la cantidad de personas que viven en ellos, podríamos hacerlo de la siguiente manera. Por defecto, la función ordena de forma ascendente, pero podemos cambiarlo a descendente utilizando la función `desc()`. 
+Por último, la función `arrange()` nos permite ordenar los datos de acuerdo a una o más variables. Por ejemplo, si quisiéramos ordenar los hogares de la región Noroeste de acuerdo a la cantidad de personas que viven en ellos, podríamos hacerlo de la siguiente manera. Por defecto, la función ordena de forma ascendente, pero podemos cambiarlo a descendente utilizando la función `desc()`. 
 
 ```{r}
-censo_hogares_seleccion <- arrange(censo_hogares_seleccion, TOTPERS) 
+eph_2024_seleccion <- arrange(eph_2024_seleccion, IX_TOT)
 
-censo_hogares_seleccion <- arrange(censo_hogares_seleccion, desc(TOTPERS))
+eph_2024_seleccion <- arrange(eph_2024_seleccion, desc(IX_TOT))
 
 ```
 
@@ -254,20 +284,23 @@ censo_hogares_seleccion <- arrange(censo_hogares_seleccion, desc(TOTPERS))
 
 Ahora bien, aprovechando que estamos aprendiendo las principales funciones de `dplyr`, vamos a aprender un nuevo modo de trabajo que nos permite una dinámica más sencilla y eficiente. Para esto haremos uso del operador *pipe* (`%>%`), del paquete `magrittr` (tidyverse), que nos permite encadenar funciones de forma más legible y eficiente.  
 
-Por ejemplo, partiendo de la base de hogares original, vamos a seleccionar las variables *redcode, provincia, vivienda_ref_id, hogar_ref_id* y *prop_factor* y vamos a guardarlas en un nuevo objeto llamado *censo_hogares_seleccion*. Pero además vamos a filtrar solo los hogares *inquilinos* y lo vamos a ordenar de formas ascendente por la variable *hogar_ref_id*.
+![https://magrittr.tidyverse.org/logo.png](https://magrittr.tidyverse.org/logo.png)  
+
+
+Por ejemplo, partiendo de la base de hogares original, vamos a seleccionar las variables *CODUSU, NRO_HOGAR, REGION* y *tenencia* y vamos a guardarlas en un nuevo objeto llamado *eph_2024_seleccion*. Pero además vamos a filtrar solo los hogares *inquilinos* y lo vamos a ordenar de formas ascendente por la variable *CODUSU*.
   
 ```{r}
-censo_hogares_seleccion <- censo_hogares %>% 
-  select(redcode, provincia, vivienda_ref_id, hogar_ref_id, prop_factor) %>%
-  filter(prop_factor == "Inquilino") %>%
-  arrange(hogar_ref_id)
+eph_2024_seleccion <- eph_2024 %>% 
+  select(CODUSU, NRO_HOGAR, REGION, tenencia) %>% 
+  filter(tenencia == "Inquilino/arrendatario de la vivienda") %>% 
+  arrange(CODUSU)
 ```
 
 Fijense que el uso del operador *pipe* no solo nos permite trabajar de un modo más eficiente, sino que también nos simplifica el trabajo de no tener que estar *llamando* al objeto en cada función que aplicamos. La base de datos que estamos transformando, es indicada en la primera línea, y luego cada función se aplica automáticamente sobre la misma. 
 
 
 ::: {.callout-tip title="Atención"}
-El operador `%>%` es una de las herramientas más poderosas de `R` e iremos incorporando su uso a lo largo del curso. Es fácil de entender su lógica de funcionamiento. Permite que vayamos encadenando funciones, una por una, que apuntan a un único objeto que queda declarado en la primera línea. El atajo de teclado para invocarlo es a través de `Ctrl + Shift + M` en *Windows* y `Cmd + Shift + M` en *Mac*. 
+El operador `%>%` es una de las herramientas más poderosas de `R` e iremos incorporando su uso a lo largo del seminario. Es fácil de entender su lógica de funcionamiento. Permite que vayamos encadenando funciones, una por una, que apuntan a un único objeto que queda declarado en la primera línea. El atajo de teclado para invocarlo es a través de `Ctrl + Shift + M` en *Windows* y `Cmd + Shift + M` en *Mac*. 
 :::
 
 ![Fuente: https://www.rforecology.com/post/how-to-use-pipes](https://www.rforecology.com/post/how-to-use-pipes/featured_hubecef9b286df4afcc3d745fb42639d5c_96728_720x0_resize_lanczos_2.png)
@@ -278,7 +311,7 @@ Teniendo ya la base en formato ordenado, habiendo seleccionado aquellas variable
 
 Esta fase en el trabajo investigativo puede implicar, entre otras opciones: 
 
-- Generar nuevas variables a partir de las existentes. Por ejemplo, realizar una sumatoria o resta aritmética, a partir de los datos disponibles en dos o más variables.
+- Generar nuevas variables a partir de las existentes. Por ejemplo, realizar una sumatoria o resta aritmética a partir de los datos disponibles en dos o más variables.
 
 - Recodificar una variable existente. Por ejemplo, reduciendo el número de categorías de una variable categórica o numérica (grupos etarios, niveles de ingreso, etc.).
 
@@ -287,71 +320,72 @@ Esta fase en el trabajo investigativo puede implicar, entre otras opciones:
 
 ## Creación de variables mediante cálculos y expresiones condicionales
 
-Para realizar estas operaciones utilizaremos siempre la función `mutate()` del paquete `dplyr`. Básicamente esta función nos creará una nueva columna en la matriz de datos, que contendrá los valores que le indiquemos. Por ejemplo, vamos a intentar calcular el nivel de hacinamiento de los hogares, a partir de la cantidad de personas que viven en ellos. El hacinamiento es una variable utilizada para el estudio de las condiciones de vida de los hogares y representa *el cociente entre la cantidad total de personas del hogar y la cantidad total de habitaciones o piezas de que dispone el mismo (sin contar baño/s y cocina/s)*. 
+Para realizar estas operaciones utilizaremos siempre la función `mutate()` del paquete `dplyr`. Básicamente esta función nos creará una nueva columna en la matriz de datos, que contendrá los valores que le indiquemos. Por ejemplo, vamos a intentar calcular el nivel de hacinamiento de los hogares, a partir de la cantidad de personas que viven en ellos. El hacinamiento es una variable utilizada para el estudio de las condiciones de vida de los hogares y representa *el cociente entre la cantidad total de personas del hogar y la cantidad total de habitaciones o piezas de que dispone el mismo (sin contar baño/s y cocina/s)*. Se considera una situación de hacinamiento crítico cuando hay 3 o más personas por cuarto.  
 
-Se considera una situación de hacinamiento crítico cuando hay 3 o más personas por cuarto. Para construir dicha indicador, primero vamos a identificar aquellas variables que necesitamos, es decir, el **total de personas por hogar** `TOTPERS` y la **cantidad de habitaciones** `H16`. Entonces, en primer lugar, vamos a crear una nueva variable llamada `personas_hab` que represente el cociente entre ambas variables.
+Para construir dicha indicador, primero vamos a identificar aquellas variables que necesitamos, es decir, el **total de personas por hogar** `IX_TOT` y la **cantidad de habitaciones** `II1`. Entonces, en primer lugar, vamos a crear una nueva variable llamada `personas_hab` que represente el cociente entre ambas variables.
 
 
 ```{r}
-censo_hogares <- censo_hogares %>% 
-  mutate(personas_hab = TOTPERS / H16)
+eph_2024 <- eph_2024 %>% 
+  mutate(personas_hab = IX_TOT / II1)
 
 ```
 
-Ya contamos con la información necesaria para clasificar a los hogares según su situación de hacinamiento. Por último, en una nueva variable, llamada `hacinamiento`, vamos a asignar un valor de 1 a aquellos hogares que tengan más de 3 personas por habitación y un valor de 0 a aquellos que no cumplan con esta condición. Para ello, introduciremos una nueva función que nos permite plantear condiciones: `case_when()`. Esta función es muy similar al `IF` en `SPSS` o la función `ifelse()` de R base. `case_when()` se pasa dentro del mutate, y se le indica la condición que se quiere evaluar y el valor que se le asignará a la nueva variable en caso de que se cumpla dicha condición, separado por el símbolo `~`. Cada argemento se separa por una coma. 
+Ya contamos con la información necesaria para clasificar a los hogares según su situación de hacinamiento. Por último, en una nueva variable, llamada `hacinamiento`, vamos a asignar un valor de 1 a aquellos hogares que tengan más de 3 personas por habitación y un valor de 0 a aquellos que no cumplan con esta condición.  
+
+Para ello, introduciremos una nueva función que nos permite plantear condiciones: `case_when()`. Esta función es muy similar al `IF` en `SPSS` o la función `ifelse()` de R base. `case_when()` se pasa dentro del mutate, y se le indica la condición que se quiere evaluar y el valor que se le asignará a la nueva variable en caso de que se cumpla dicha condición, separado por el símbolo `~`. Cada argemento se separa por una coma. 
 
 ```{r}
-censo_hogares <- censo_hogares %>% 
-  mutate(hacinamiento = case_when(personas_hab > 3 ~ 1,
-                                  personas_hab <= 3 ~ 0))
+eph_2024 <- eph_2024 %>% 
+  mutate(hacinamiento = case_when(personas_hab >= 3 ~ 1,
+                                  personas_hab < 3 ~ 0))
 ```
 
 El cálculo del hacinamiento podría simplificarse aun más, concatenando ambas operaciones dentro de la función `mutate()`.  
 
 ```{r eval=FALSE}
-censo_hogares <- censo_hogares %>% 
-  mutate(personas_hab = TOTPERS / H16,
-         hacinamiento = case_when(personas_hab > 3 ~ 1,
-                                  personas_hab <= 3 ~ 0))
+eph_2024 <- eph_2024 %>% 
+  mutate(personas_hab = IX_TOT / II1,
+         hacinamiento = case_when(personas_hab >= 3 ~ 1,
+                                 personas_hab < 3 ~ 0))
 ```
 
 
 Si queremos observar los resultados de la tarea realizada, podemos hacerlo a través de la función `table()`.
 
 ```{r}
-table(censo_hogares$hacinamiento)
+table(eph_2024$hacinamiento)
 ```
-
 
 
 ## Recodificación de variables
 
 El combo `mutate()` y `case_when()` también nos permite recodificar variables, es decir, cambiar los valores de una variable por otros o reducir su número de categorías. Es una práctica frecuente en el análisis de datos, ya que permite simplificar, posteriormente, la interpretación de los resultados.
 
-Por ejemplo, vayamos ahora a la base de personas. En ella, nos encontramos con la `p03` que indica la edad de la persona. Vamos a recodificar esta variable en grupos etarios, de acuerdo a una clasificación clásica:  
+Por ejemplo, vayamos ahora a la base de personas. En ella, nos encontramos con la variable `IPCF` que identifica al ingreso per cápita familiar. Vamos a recodificar esta variable en tres grupos de acuerdo a la distribución decílica^[[https://www.indec.gob.ar/uploads/informesdeprensa/ingresos_4trim24D779BFC8BE.pdf](https://www.indec.gob.ar/uploads/informesdeprensa/ingresos_4trim24D779BFC8BE.pdf){target="_blank"}].:  
 
-- 0 a 14 años
-- 15 a 64 años
-- 65 años y más
+- ingresos bajos: hasta $264.000 inclusive 
+- ingresos medios: de $264.000 a $483.333 inclusive 
+- ingresos altos: más de $483.333
 
 ```{r}
-censo_personas <- censo_personas %>% 
-  mutate(grupo_etario = case_when(p03 <= 14 ~ "0 a 14 años",
-                                  p03 >= 15 & p03 <= 64 ~ "15 a 64 años",
-                                  p03 >= 65 ~ "65 años y más"))
+eph_2024 <- eph_2024 %>% 
+  mutate(ingresos_familiares = case_when(IPCF >= 0 & IPCF <= 264000 ~ "ingresos bajos",
+                             IPCF > 264000 & IPCF <= 483333 ~ "ingresos medios",
+                             IPCF > 483333 ~ "ingresos altos"))
 ```
 
-Otra forma de indicar que queremos agrupar valores que se encuentran en un rango es través del operador de pertenencia `%in%` que evalúa si los elementos de un vector están presentes en otro vector. Por ejemplo, podemos crear la misma variable de `grupo_etario` del siguiente modo:
+Otra forma de indicar que queremos agrupar valores que se encuentran en un rango es través del operador de pertenencia `%in%` que evalúa si los elementos de un vector están presentes en otro vector. Por ejemplo, podemos crear la misma variable de `ingresos_familiares` del siguiente modo:
 
 ```{r}
-censo_personas <- censo_personas %>% 
-  mutate(grupo_etario = case_when(p03 %in% 0:14 ~ "0 a 14 años",
-                                  p03 %in% 15:64 ~ "15 a 64 años",
-                                  p03 >= 65 ~ "65 años y más"))
+eph_2024 <- eph_2024 %>% 
+  mutate(ingresos_familiares = case_when(IPCF %in% 0:264000 ~ "ingresos bajos",
+                             IPCF %in% 264001:483333 ~ "ingresos medios",
+                             IPCF > 483333 ~ "ingresos altos"))
 ```
 
 ::: {.callout-tip title="Atención"}
-El operador `%in%` también puede ser utilizado para identificar valores en un vector alfanumérico o de cadena. En ese caso debemos ingresar los valores a evaluar dentro de la función c(). Por ejemplo `provincia %in% c("Buenos Aires", "Chaco", "Formosa")`.
+El operador `%in%` también puede ser utilizado para identificar valores en un vector alfanumérico o de cadena. En ese caso debemos ingresar los valores a evaluar dentro de la función c(). Por ejemplo, `provincia %in% c("Buenos Aires", "Chaco", "Formosa")`.
 :::
 
 
