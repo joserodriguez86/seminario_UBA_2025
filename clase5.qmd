@@ -18,6 +18,9 @@ lang: es
 highlight-style: espresso
 lightbox: true
 cache: false
+execute:
+  warning: false
+  message: false
 ---
 
 # Resumen y agregación de datos
@@ -33,17 +36,13 @@ Para ello, en este apartado, revisaremos el uso de las funciones `summarise()` y
 Para esta clase, necesitaremos tener instaladas las siguientes librerías:
 
 ```{r eval=FALSE}
-install.packages("sjmisc")
 install.packages("summarytools")
-install.packages("janitor")
-install.packages("openxlsx")
-install.packages("flextable")
 install.packages("DescTools")
 ```
 
 ## Base de datos y librerías
 
-Para revisar estas funciones utilizaremos la base de individuos de la EPH. Para ello vamos a descargar los datos desde el paquete `eph`. A su vez, seguiremos usando los paquetes del `tidyverse`.
+Para revisar estas funciones utilizaremos la base de individuos de la *EPH*. Para ello vamos a descargar los datos desde el paquete `eph`. A su vez, seguiremos usando los paquetes del `tidyverse`.
 
 ```{r message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -52,6 +51,21 @@ library(eph)
 eph_ind <- get_microdata(year = 2024, period = 4, type = "individual")
 
 ```
+
+## Uso de ponderadores para las estimaciones  
+
+Generalmente las encuestas de hogares como la *EPH* o el *Latinobarómetro*, al ser relevamientos realizados con muestreos probabilísticos, utilizan ponderadores para corregir el sesgo de la muestra. Es decir, permiten ajustar en los casos en que determinadas poblaciones se encuentran sub-representadas o sobre-representadas en la muestra. Los ponderadores son variables de tipo numéricas que *multiplican* el valor de cada caso para alcanzar una estimación más cercana a la realidad sobre la que se quiere investigar.  
+
+A su vez, en la *EPH*, los ponderadores funcionan también como *factor de expansión*, es decir, no solo corrigen el error de muestreo, sino que también elevan a las estimaciones al universo de estudio. La *EPH* cuenta con cuatro tipos de ponderadores:  
+
+- **PONDERA**: es el ponderador general que se utiliza para la mayoría de las variables.  
+
+- Los ponderadores de ingresos, que corrigen la *no respuesta*:  
+  - **PONDII** para el tratamiento del ingreso total individual  
+  - **PONDIIO** para el ingreso de la ocupación principal  
+  - **PONDIH** para el ingreso total familiar y para el ingreso per cápita familiar  
+  
+En los siguientes ejemplos que veamos utilizaremos el ponderador adecuado para realizar las estimaciones.  
 
 ## Estadísticas resumen
 
@@ -119,25 +133,38 @@ Complementan la información de centralidad, dan cuenta del comportamiento de la
 
 ### Calculando medidas resumen en `R`
 
-`R base` cuenta con una función que nos permite calcular estadísticas resumen de una variable de forma rápida y simple, la función `summary()`. Por ejemplo, si quisieramos estimar el promedio de edad de la población, y otros estadísticos descriptivos, podríamos hacerlo de la siguiente forma:
+`R base` cuenta con una función que nos permite calcular estadísticas resumen de una variable de forma rápida y simple, la función `summary()`. Por ejemplo, si quisiéramos estimar el promedio de edad de la población, y otros estadísticos descriptivos, podríamos hacerlo de la siguiente forma:
 
 ```{r}
-summary(censo_personas$p03)
+summary(eph_ind$CH06)
 ```
 
-De este modo, observamos que la edad promedio es `r round(mean(censo_personas$p03), digits = 2)`, la mediana es `r median(censo_personas$p03)` y la edad máxima es `r max(censo_personas$p03)`.
+De este modo, observamos que la edad promedio es `r round(mean(eph_ind$CH06), digits = 2)`, la mediana es `r median(eph_ind$CH06)` y la edad máxima es `r max(eph_ind$CH06)`.  
 
-En `dplyr`, la función `summarise()` nos permite realizar el mismo cálculo de forma más ordenada y clara. Por ejemplo, si quisiéramos calcular el promedio de edad de la población, podríamos hacerlo de la siguiente forma:
+El único problema con la función `summary()` es que no nos permite calcular estadísticos ponderados. Sin embargo, existe una librería llamada `summarytools` que nos permite agregar el argumento `weights` para calcular las estadísticas ponderadas. Por ejemplo, si quisiéramos calcular el promedio de edad de la población utilizando el ponderador *PONDERA*, podríamos hacerlo de la siguiente forma utilizando la función `descr()`:  
 
 ```{r}
-censo_personas %>%
-  summarise(promedio_edad = mean(p03))
+library(summarytools)  
+
+descr(eph_ind$CH06, weights = eph_ind$PONDERA)
+```
+
+
+En `dplyr`, la función `summarise()` nos permite realizar el mismo cálculo de forma más ordenada y clara. Por ejemplo, si quisiéramos calcular el promedio de edad de la población (variable CH06), podríamos hacerlo de la siguiente forma:
+
+```{r}
+eph_ind %>%
+  summarise(promedio_edad = mean(CH06)) # no ponderado
+
+eph_ind %>%
+  summarise(promedio_edad = weighted.mean(CH06, PONDERA)) # ponderado
 
 ```
 
 `summarise` acepta toda una serie de estadísticos básicos que pueden utilizar:
 
 -   `mean()`: promedio
+-   `weighted.mean()`: promedio ponderado
 -   `median()`: mediana
 -   `min()`: mínimo
 -   `max()`: máximo
@@ -150,442 +177,96 @@ censo_personas %>%
 -   `n_distinct()`: número de valores distintos
 
 ```{r}
-censo_personas %>%
-  summarise(promedio_edad = mean(p03),
-            mediana_edad = median(p03),
-            min_edad = min(p03),
-            max_edad = max(p03),
-            sd_edad = sd(p03))
+eph_ind %>%
+  summarise(promedio_edad = mean(CH06),
+            mediana_edad = median(CH06),
+            min_edad = min(CH06),
+            max_edad = max(CH06),
+            sd_edad = sd(CH06))
 
 ```
+
+De este modo, la función `summarise` nos permite calcular múltiples estadísticos de forma rápida y sencilla y nos devuelve un *data frame* con un valor para cada estadístico calculado.  
+
+::: {.callout-tip title="Para revisar"}
+La mayoría de los estadísticos descriptivos y de dispersión que nos brinda `Rbase` no nos permite utilizar ponderadores. Por lo tanto, si queremos calcular estadísticos ponderados puntuales debemos utilizar otras librerías. Les recomendamos inspeccionar las librerías `survey` y `DescTools`.
+:::
+
 
 ## Agregación de datos {#sec-agregacion}
 
-Otra forma de realizar resúmenes o cálculos sobre las variables es a partir de la información agrupada. Frecuentemente necesitamos que nuestras estadísticas sean calculadas por grupos de edad, sexo, nivel educativo, provincia de residencia, etc. Para ello, utilizamos la función `group_by()`, que como su nombre lo indica, nos agrupa la información en base a una variable. En términos de la matriz de datos, lo que hace es cambiar la unidad de análisis: de personas a grupos de edad, por ejemplo.
+Otra forma de realizar resúmenes o cálculos sobre las variables es a partir de la información agrupada. Frecuentemente necesitamos que nuestras estadísticas sean calculadas por grupos de edad, sexo, nivel educativo, provincia de residencia, país, etc. Para ello, utilizamos la función `group_by()`, que como su nombre lo indica, nos agrupa la información en base a una variable (o más). En términos de la matriz de datos, lo que hace es cambiar la unidad de análisis: de personas a grupos de edad, por ejemplo.
 
-Si quisiéramos calcular el promedio de edad por sexo, podríamos seguir las siguientes instrucciones:
+Si quisiéramos calcular el promedio de edad por sexo (variable *CH04*) podríamos seguir las siguientes instrucciones:
 
 ```{r}
-censo_personas %>% 
-  group_by(p02) %>% 
-  summarise(promedio_edad = mean(p03))
+eph_ind %>% 
+  group_by(CH04) %>% 
+  summarise(promedio_edad = weighted.mean(CH06, weights = PONDERA))
 ```
 
-Fíjense que utilizando los *pipes* es sencillo encadenar cada una de las funciones. Primero agrupamos la información por sexo y luego calculamos el promedio de edad. Observando el libro de códigos, identificamos que 1 es varón y 2 mujer, y que el promedio de edad de los varones es `r round(mean(censo_personas$p03[censo_personas$p02 == 1]), digits = 2)` y de las mujeres es `r round(mean(censo_personas$p03[censo_personas$p02 == 2]), digits = 2)`.
+Fíjense que utilizando los *pipes* es sencillo encadenar cada una de las funciones. Primero agrupamos la información por sexo y luego calculamos el promedio de edad. Observando el libro de códigos, identificamos que 1 es varón y 2 mujer, y que el promedio de edad de los varones es `r round(mean(eph_ind$CH06[eph_ind$CH04 == 1]), digits = 2)` y de las mujeres es `r round(mean(eph_ind$CH06[eph_ind$CH04 == 2]), digits = 2)`.
 
-¿A qué se debe un promedio más alto en las mujeres? Una de las explicaciones es que la esperanza de vida de las mujeres es mayor que la de los varones. ¿Como podríamos estimar esto utilizando las funciones vistas anteriormente? Podríamos acercarnos calculando la edad máxima y el percentil 99 de cada sexo, es decir, el valor que acumula el 99% de las observaciones.
+¿A qué se debe un promedio más alto en las mujeres? Una de las explicaciones es que la esperanza de vida de las mujeres es mayor que la de los varones. ¿Como podríamos estimar esto utilizando las funciones vistas anteriormente? Podríamos acercarnos calculando la edad máxima y el percentil 99 de cada sexo, es decir, el valor que acumula el 99% de las observaciones. Para ello, utilizaremos las funciones `max()` y `quantile()`, respectivamente. El código quedaría de la siguiente forma:
 
 ```{r}
-censo_personas %>% 
-  group_by(p02) %>% 
-  summarise(promedio_edad = mean(p03),
-            max_edad = max(p03),
-            percentil_99 = quantile(p03, 0.99))
+eph_ind %>% 
+  group_by(CH04) %>% 
+  summarise(promedio_edad = weighted.mean(CH06, weights = PONDERA),
+            max_edad = max(CH06),
+            percentil_99 = quantile(CH06, probs = 0.99))
 
 ```
 
-### Replicando algunos indicadores censales
+### Replicando algunos indicadores de INDEC
 
-Bajo el aplicativo [**REDATAM**](https://redatam.indec.gob.ar/binarg/RpWebEngine.exe/Portal?BASE=CPV2010B&lang=ESP){target="_blank"} del Censo Nacional de Población, Hogares y Viviendas 2010, se pueden calcular una serie de indicadores censales ya predefinidos. Vamos a tratar de replicar algunos de estos para practicar el uso de `group_by` y `summarise`.
+**INDEC** publica informes periódicos con los resultados extraídos de la **EPH** sobre mercado de trabajo, ingresos y pobreza. Vamos a tratar de replicar algunos de los indicadores que brindan los informes de [tasas e indicadores socioeconómicos](https://www.indec.gob.ar/uploads/informesdeprensa/mercado_trabajo_eph_4trim24083C6B9E41.pdf){target="_blank"} y [distribución de ingresos](https://www.indec.gob.ar/uploads/informesdeprensa/ingresos_4trim24D779BFC8BE.pdf){target="_blank"} para practicar el uso de `group_by` y `summarise`.
 
-**Relación de masculinidad**: es el cociente entre la cantidad de varones y la cantidad de mujeres. Indica la cantidad de varones por cada cien mujeres en un área determinada.
-
-```{r}
-censo_personas %>% 
-  group_by(p02) %>% # Agrupamos por sexo
-  summarise(suma = n()) %>% # Contamos la cantidad de personas por sexo
-  summarise(relacion_masculinidad = (suma[p02 == 1] / suma[p02 == 2]) * 100) # Calculamos el cociente entre la cantidad de varones y mujeres y lo multiplicamos por 100.
-```
-
-Fíjense que en este caso, utilizamos dos veces la función `summarise()`. La primera vez para contar la cantidad de personas por sexo y la segunda para calcular la relación de masculinidad. A su vez, se han utilizado los corchetes para *filtrar* la fila que debemos utilizar para el cálculo.
-
-**Índice de dependencia potencial**: es el cociente entre la población potencialmente inactiva (grupos de 0 a 14 y 65 años y más) y la población en edades “teóricamente” activas (15 a 64 años).
-
-Vamos a aprovechar el uso de la variable construida `EDADAGRU` que nos permite identificar a las personas en grupos de edad (0-14 / 15-64 / 65 y más). Es una variable similar a la que construimos en la clase anterior.
+*Tasa de empleo*: es el porcentaje entre la población ocupada y la población total. Nos basaremos en la variable `ESTADO` que mide la condición de actividad de las personas: ocupado (1), desocupado (2), inactivo (3) y menor de 10 años (4).  
 
 ```{r}
-censo_personas %>% 
-  group_by(edadagru) %>% # Agrupamos por grupo de edad
-  summarise(suma = n()) %>% # Contamos la cantidad de personas por grupo de edad
-  summarise(indice_dependencia = (suma[edadagru == 1] + suma[edadagru == 3]) / suma[edadagru == 2] * 100) # Calculamos el cociente entre la población potencialmente inactiva y la población en edades activas.
+eph_ind %>% 
+  group_by(ESTADO) %>% # Agrupamos por condición de actividad
+  summarise(total = sum(PONDERA)) %>% # Sumamos los casos por condición de actividad
+  summarise(tasa_empleo = (total[ESTADO == 1] / sum(total)) * 100) # Calculamos la tasa de empleo
   
 ```
+
+Fíjense que en este caso, utilizamos dos veces la función `summarise()`. La primera vez para contar la cantidad de personas por condición de actividad y la segunda para calcular la tasa de empleo. A su vez, se han utilizado los corchetes para *filtrar* la fila que debemos utilizar para el cálculo.
 
 **Tasa de desocupación**: es el porcentaje entre la población desocupada y la población económicamente activa. Brinda información sobre la proporción de personas que están demandando trabajo y no lo consiguen.
 
-Vamos a calcular esta tasa pero a nivel provincial, es decir, vamos a agregar la información por por dos variables: `provincia` (provincia de residencia) y `condact` (condición de actividad). Para obtener las etiquetas de las provincias, primero construiremos una variable de tipo factor.
 
 ```{r}
-censo_personas <- censo_personas %>% 
-  mutate(provincia_f = factor(provincia, labels = c("CABA",
-                                                  "Buenos Aires",
-                                                  "Catamarca",
-                                                  "Córdoba",
-                                                  "Corrientes",
-                                                  "Chaco",
-                                                  "Chubut",
-                                                  "Entre Ríos",
-                                                  "Formosa",
-                                                  "Jujuy",
-                                                  "La Pampa",
-                                                  "La Rioja",
-                                                  "Mendoza",
-                                                  "Misiones",
-                                                  "Neuquén",
-                                                  "Río Negro",
-                                                  "Salta",
-                                                  "San Juan",
-                                                  "San Luis",
-                                                  "Santa Cruz",
-                                                  "Santa Fe",
-                                                  "Santiago del Estero",
-                                                  "Tucumán",
-                                                  "Tierra del Fuego, Antártida e Islas del Atlántico Sur")))
-
-censo_personas %>% 
-  filter(condact != 0) %>% # quitamos los casos que no aplican a la variable condición de actividad
-  group_by(provincia_f, condact) %>% # agrupamos los casos por provincia y condición de actividad
-  summarise(suma = n()) %>% # sumamos los casos
-  group_by(provincia_f) %>% # ahora agrupamos solo por provincia
-  summarise(tasa_desocupacion = (suma[condact == 2] / (suma[condact == 1] + suma[condact == 2])) * 100) %>% # calculamos la tasa de desocupación
-  arrange(-tasa_desocupacion) # ordenamos de mayor a menor tasa de desocupación
+eph_ind %>% 
+  group_by(ESTADO) %>% # Agrupamos por condición de actividad
+  summarise(total = sum(PONDERA)) %>% # Sumamos los casos por condición de actividad
+  summarise(tasa_desoc = (total[ESTADO == 2] / sum(total[ESTADO == 1 | ESTADO == 2])) * 100) # Calculamos la tasa de empleo
 ```
 
-Para hacer este último cálculo hemos realizado más pasos que en los anteriores. Primero, hemos filtrado los casos que no aplican a la variable `condact` (0 = no aplica, 1 = ocupado, 2 = desocupado, 3 = inactivo). Luego, hemos agrupado por provincia y condición de actividad, sumando los casos. Posteriormente, hemos vuelto a agrupar solo por provincia y calculado la tasa de desocupación. Finalmente, hemos ordenado de mayor a menor tasa de desocupación.
-
-# Construcción de tablas
-
-En esta apartado revisaremos distintas aproximaciones a la construcción de tablas de frecuencias y de tablas de contingencia. Quizás `R` no se destaque por la simpleza del análisis exploratorio a través de tablas, pero existen infinidad de paquetes que nos permitirán llegar a resultados similares. Empezaremos explorando la funciones disponibles en **R base**, luego revisaremos algunos paquetes que harán la mayor parte del trabajo por nosotros y, por último, veremos cómo podemos hacerlo con `dplyr` y `tidyr` de `tidyverse`.
-
-## La función `table()`
-
-La función `table()` es una de las más utilizadas para la construcción de tablas de frecuencias, tanto para el análisis univariable como bivariable. Para esta sección, a los fines agilizar el proceso de trabajo, vamos a seleccionar trabajar con los casos de la provincia de Mendoza, creando el objeto `censo_personas_mendoza`.
+Ahora bien, vamos a calcular la tasa de desocupación por región geográfica. Para ello, utilizaremos la variable *REGION* en la función `group_by` dos veces. 
 
 ```{r}
-censo_personas_mendoza <- censo_personas %>% 
-  filter(provincia == 50)
+eph_ind %>% 
+  group_by(REGION, ESTADO) %>% # Agrupamos por región y condición de actividad
+  summarise(total = sum(PONDERA)) %>% 
+  group_by(REGION) %>% 
+  summarise(tasa_desoc = (total[ESTADO == 2] / sum(total[ESTADO == 1 | ESTADO == 2])) * 100) # Calculamos la tasa de desocupación
 ```
 
-Ahora vamos a identificar a las variables educativas *nivel educativo que cursa o cursó* (`p09`) y *completó ese nivel* (`p10`) y vamos a convertirlas a factores.
+Para calcular la tasa al interior de cada región, luego de obtener los totales de ocupados y desocupados, debemos volver a aplicar el `group_by()` para agrupar por región. De este modo, la función `summarise()` calculará la tasa de desocupación para cada región.  
+
+**Deciles de ingresos per cápita familiar**: es una medida de posición que consiste en ordenar a la población por los montos de ingresos de menor a mayor según el ingreso per cápita familiar(variable *IPCF*), para luego agruparlos en subconjuntos que contengan cada uno el 10%.  
+
+Para conocer los valores del IPCF, vamos a utilizar la función `Quantile()` de la librería `DescTools`, que nos permite calcular los cuantiles de una variable con la opción de usar el ponderador. En la opción `probs` especificamos los percentiles que queremos calcular, en este caso del 0 al 1 con un incremento de 0.1, es decir, los deciles. El ponderador, al trabajar con la variable IPCF, será *PONDIH*.  
+
 
 ```{r}
-censo_personas_mendoza <- censo_personas_mendoza %>% 
-  mutate(p09 = factor(p09, labels = c("No aplica",
-                                      "Inicial",
-                                      "Primario",
-                                      "EGB",
-                                      "Secundario",
-                                      "Polimodal",
-                                      "Sup. no universitario",
-                                      "Universitario",
-                                      "Posgrado",
-                                      "Educación especial")),
-         p10 = factor(p10, labels = c("No aplica",
-                                      "Completó",
-                                      "No completó")))
-```
-
-Ahora si, con la función `table()` vamos a construir una tabla de frecuencias de la variable `p09`. Como se verá, la salida es rápida pero con información escueta: no tenemos frecuencias relativas, ni acumuladas.
-
-```{r}
-table(censo_personas_mendoza$p09)
-```
-
-Si queremos calcular las proporciones o frecuencias relativas, podemos llamar a la función `prop.table()` sobre la función ya especificada:
-
-```{r}
-prop.table(table(censo_personas_mendoza$p09))
-```
-
-Por último, si queremos presentar los resultados en porcentajes, lo multiplicamos por 100:
-
-```{r}
-prop.table(table(censo_personas_mendoza$p09)) * 100
-```
-
-Estas funciones nos sirven también para tablas cruzadas. Por ejemplo calculemos el nivel educativo de las personas según si han completado o no ese nivel.
-
-```{r}
-table(censo_personas_mendoza$p09, censo_personas_mendoza$p10)
-```
-
-Y si quisiéramos calcular los porcentajes por fila...
-
-```{r}
-prop.table(table(censo_personas_mendoza$p09, censo_personas_mendoza$p10), margin = 1) * 100
-```
-
-Como verán, la función `table()` es muy útil para la construcción rápida de tablas de frecuencias, pero no nos permite realizar análisis complementarios, ni nos otorgan una salida en formato **tidy**.
-
-## Algunas librerías para la construcción de tablas
-
-A veces necesitamos hacer procesamientos rápidos, sin necesidad de escribir mucho código. Si nuestra opción es quedarnos usando `R` y no migrar a otros programas, podemos utilizar algunas librerías que nos facilitarán la construcción de tablas. Les dejamos una lista con la variedad de librerías que pueden utilizar:
-
--   `janitor`
--   `expss`
--   `summarytools`
--   `gmodels`
--   `sjmisc`
-
-Vamos a realizar una primera prueba utilizando la librería `sjmisc`. En primer lugar, la función `frq()` nos devuelve una tabla de frecuencias algo más completa que la función `table()`.
-
-```{r message=FALSE, warning=FALSE}
-library(sjmisc)
-
-censo_personas_mendoza %>% 
-  frq(p09)
-```
-
-El mismo paquete nos permite realizar tablas cruzadas con la función `flat_table`.
-
-```{r}
-censo_personas_mendoza %>% 
-  flat_table(p09, p10, margin = "row")
-```
-
-`summarytools` es otra librería que nos permite realizar tablas de frecuencias. En este caso, la función `freq()` nos devuelve una tabla de frecuencias similar a la función anterior.
-
-```{r message=FALSE, warning=FALSE}
-library(summarytools)
-
-censo_personas_mendoza %>% 
-  freq(p09)
-```
-
-Del mismo modo, la función `ctable()` realiza el cruce entre ambas variables, pudiendo elegir calcular las proporciones por fila, columna o total con la opción `prop`. El problema es que esta función no funciona con el *pipe* `%>%`.
-
-```{r}
-ctable(censo_personas_mendoza$p09, censo_personas_mendoza$p10, prop = "r")
-```
-
-## Tablas con `dplyr` y `tidyr`
-
-Si bien las librerías anteriores nos permiten realizar tablas de frecuencias de forma rápida y sencilla, no siguen la filosofía del `tidyverse` que venimos utilizando y que nos servirá para trabajar en forma ordenada en cada momento de la investigación. Quizás, a principio, la elaboración de tablas con estás funciones sea algo complicado, pero a futuro nos facilitará la posterior presentación de los resultados en documentos o en gráficos.
-
-La secuencia de pasos es similar a como lo hemos hecho en el apartado de la [sección @sec-agregacion]. Primero agrupamos la información (`group_by()`) y luego contamos los casos. Recuerden que esto último podemos hacerlo mediante la función `summarise()`, `count()` o `tally()`.
-
-```{r}
-censo_personas_mendoza %>% 
-  group_by(p09) %>% 
-  summarise(frecuencia = n())
-
-censo_personas_mendoza %>%
-  group_by(p09) %>% 
-  count()
-
-censo_personas_mendoza %>%
-  group_by(p09) %>% 
-  tally()
-```
-
-Para realizar tablas bivariadas, lo primero que adicionaremos es la segunda variable a la función `group_by()`. Luego, contaremos los casos con cualquiera de la funciones de conteo.
-
-```{r}
-censo_personas_mendoza %>% 
-  group_by(p09, p10) %>% 
-  tally()
-```
-
-Como verán, la tabla se nos presenta en un formato extraño, que se denomina *long* o largo, debido a que las dos variables de interés se sitúan en las primeras columnas y las frecuencias en la última. En algunos casos, como por ejemplo para la construcción de gráficos, este formato es apropiado. Pero para la presentación de tablas, necesitamos un formato de tipo *wide* o ancho.
-
-Para presentar la tabla en un formato más amigable, utilizaremos la función `pivot_wider` de `tidyr`. Lo que debemos declarar en dicha función es cual es la variable que pasará a mostrar sus categorías en las columnas y de dónde surgirán los valores que irán en las celdas. En nuestro caso, las columnas se completarán con las categorías de la variable `p10` y los valores serán las frecuencias de los conteos de la variable `n` que construimos en el paso anterior.
-
-```{r}
-censo_personas_mendoza %>%
-  group_by(p09, p10) %>% 
-  tally() %>% 
-  pivot_wider(names_from = p10, values_from = n)
-```
-
-Vamos a seguir emprolijando la tabla, eliminando los casos de la variable `p10` que son *no aplica*.
-
-```{r}
-censo_personas_mendoza %>%
-  filter(p10 != "No aplica") %>% 
-  group_by(p09, p10) %>% 
-  tally() %>% 
-  pivot_wider(names_from = p10, values_from = n)
-```
-
-Como se vera, la tabla se presenta de forma más ordenada y clara, sin embargo, aún no hemos calculado las proporciones. Para ello, lo mejor es valerse de la librería janitor que automáticamente nos calculará distintos tipos de proporciones, nos presentará los datos en formato porcentual y nos dejará agregar los totales por fila o columna. Exploremos la librería.
-
-```{r message=FALSE, warning=FALSE}
-library(janitor)
-
-censo_personas_mendoza %>%
-  filter(p10 != "No aplica") %>% 
-  group_by(p09, p10) %>% 
-  tally() %>% 
-  pivot_wider(names_from = p10, values_from = n) %>% 
-  adorn_totals("row") %>% # Agregamos los totales por fila
-  adorn_percentages("row") %>% # Calculamos las proporciones por fila
-  adorn_pct_formatting(digits = 1) # Presentamos los valores en formato porcentual
-```
-
-### El formato *tidy*
-
-Disponer los datos en forma ordenada implica que: 1) cada variable es una columna, 2) cada observación es una fila y 3) cada valor se encuentra en una celda. Sin embargo muchas veces, los datos distan de presentarse en ficho formato. Por ejemplo, es frecuente que:  
-
-- los encabezados de las columnas sean valores,
-- muchas variables sean guardadas en una columna,
-- las variables se encuentren en las filas y columnas, 
-- múltiples unidades de análisis se encuentren en una misma tabla,
-- una unidad de análisis se encuentre en varias tablas.  
-
-Para resolver estos problemas, `tidyr` nos ofrece las funciones `pivot_longer()` y `pivot_wider()`. La primera nos permite pasar de un formato ancho a uno largo, mientras que la segunda nos permite pasar de un formato largo a uno ancho.
-
-![Formato ancho](imagenes/pivot_longer.png){width="80%"}
-
-`pivot_longer()` nos permite pasar de un formato ancho a uno largo. Para ello, debemos especificar las columnas que queremos mantener y las que queremos transformar en filas. Con la función *names_to* especificamos el nombre de la nueva columna que contendrá los nombres de las columnas que estamos transformando en filas, y con *values_to* especificamos el nombre de la nueva columna que contendrá los valores de las columnas que estamos transformando en filas.
-
-![Formato largo](imagenes/pivot_wider.png){width="80%"}
-
-`pivot_wider()` nos permite pasar de un formato largo a uno ancho. Para ello, debemos especificar las columnas que queremos mantener y las que queremos transformar en columnas. Con la función *names_from* especificamos el nombre de la nueva columna que contendrá los nombres de las columnas que estamos transformando en columnas, y con *values_from* especificamos el nombre de la nueva columna que contendrá los valores de las columnas que estamos transformando en columnas.
-
-
-## Medidas de asociación
-
-Las medidas de asociación son estadísticos que nos permiten evaluar la relación entre dos variables. En el caso de las tablas de contingencia, las medidas de asociación nos permiten evaluar si existe una relación entre las variables y, en caso de existir, cuál es la fuerza y dirección de esa relación (en el caso de variables ordinales).
-
-Existen muchas medidas de asociación, pero aquí señalaremos algunas de las más comunes y frecuentemente utilizadas:
-
--   **Chi-cuadrado de Pearson**: es una medida de asociación que nos permite evaluar si existe una relación entre dos variables categóricas. La hipótesis nula es que no existe relación entre las variables. Si el valor de chi-cuadrado es significativo, rechazamos la hipótesis nula y concluimos que existe una relación entre las variables. Su mínimo es 0 y su máximo es infinito. No mide la fuerza de la asociación.
-
--   **V de Cramer**: está basada en la prueba de Chi cuadrado y está pensada para variables nominales. Permite determinar la fuerza de la asociación. Su valor oscila entre 0 y 1. A mayor valor, mayor es la fuerza de la asociación.
-
--   **Tau de Kendall**: es una medida de asociación no paramétrica que mide la asociación entre dos variables ordinales. Su valor oscila entre -1 y 1. Valores positivos indican una asociación directa, valores negativos una asociación inversa y 0 la ausencia de asociación.
-
--   **Residuos**: los residuos son una medida de asociación que nos permite identificar en qué celdas de la tabla de contingencia se concentra la asociación. Los residuos positivos indican que la frecuencia observada es mayor que la esperada, mientras que los residuos negativos indican que la frecuencia observada es menor que la esperada.
-
-Vamos a calcular el chi-cuadrado de Pearson y la V de Cramer para evaluar la asociación existente entre el nivel educativo alcanzado (`p09`) y la utilización de computadora (`p12`). Para ello, utilizaremos la función `chisq.test()` de `R base` y la función `CramerV` de la librería `DescTools`.
-
-```{r message=FALSE, warning=FALSE}
 library(DescTools)
 
-#Creamos un nuevo objeto sin los casos que no aplican en p12
-censo_personas_mendoza2 <- censo_personas_mendoza %>% 
-  filter(p12 != 0) 
-
-# Calculamos el chi-cuadrado de Pearson
-chisq.test(censo_personas_mendoza2$p09, censo_personas_mendoza2$p12)
-
-# Calculamos otros coeficientes
-CramerV(censo_personas_mendoza2$p09, censo_personas_mendoza2$p12)
-
+eph_ind %>% 
+  summarise(deciles_ingresos = Quantile(IPCF, probs = seq(0, 1, 0.1), weights = PONDIH)) # Calculamos los deciles de ingresos per cápita familiar
 ```
 
-El resultado del chi-cuadrado de Pearson nos indica que existe una relación significativa entre las variables, ya que el valor de p es menor a 0.05. Por otro lado, la V de Cramer nos indica que la fuerza de la asociación es alta, ya que el valor es `r round(CramerV(censo_personas_mendoza2$p09, censo_personas_mendoza2$p12), digits = 3)`, es decir, el nivel educativo alcanzado influencia, como es esperado, el uso o no de computadoras.
+Así el cálculo nos devuelve 11 filas en donde cada una representa el límite inferior y superior de cada decil. Por ejemplo, el decil 1 que agrupa al 10 % de la población con ingresos más bajos, tiene un límite inferior de 0 y un límite superior de **`r format(Quantile(eph_ind$IPCF, probs = 0.1, weights = eph_ind$PONDIH, names = F), scientific = FALSE,  big.mark = ".")`**. Por otro lado, el decil 10 que agrupa al 10 % de la población con ingresos más altos, tiene un límite inferior de **`r format(Quantile(eph_ind$IPCF, probs = 0.9, weights = eph_ind$PONDIH, names = F), scientific = FALSE,  big.mark = ".")`** y un límite superior de **`r format(Quantile(eph_ind$IPCF, probs = 1, weights = eph_ind$PONDIH, names = F), scientific = FALSE,  big.mark = ".")`**.
 
-# Exportando los resultados
-
-Hasta aquí hemos trabajado con tablas de frecuencias y con tablas de contingencia. Si lo que necesitamos es explorar los datos para conocer la información que disponemos, probar hipótesis o realizar análisis descriptivos, con las salidas gráficas que nos ofrece `RStudio` nos bastaría. Sin embargo, a veces, necesitamos presentar los resultados en informes, documentos o presentaciones. Para ello, necesitamos exportar los resultados a formatos comúnmente como xlsx, docx, pdf, etc.
-
-En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de calculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en `RStudio`, tales como html o pdf.
-
-::: {.callout-tip title="Recomendación"}
-A lxs interesadxs les recomendamos revisar los sistemas de publicación científica tales como `RMarkdown` y `Quarto`. Ambos sistemas permiten la integración de código `R` con texto, gráficos y tablas, y la exportación a distintos formatos de salida.
-:::
-
-## Exportando a xslx
-
-Para exportar los resultados a una hoja de cálculo, utilizaremos la librería `openxlsx`. Esta librería nos permite exportar los resultados a un archivo de `Excel`, añadir hojas de calculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior.
-
-```{r message=FALSE, warning=FALSE}
-library(openxlsx)
-
-# Creamos un objeto con la tabla de frecuencias
-tabla_educ <- censo_personas_mendoza %>%
-  filter(p10 != "No aplica") %>% 
-  group_by(p09, p10) %>% 
-  tally() %>% 
-  pivot_wider(names_from = p10, values_from = n) %>% 
-  adorn_totals("row") %>% 
-  adorn_percentages("row") %>% 
-  adorn_pct_formatting(digits = 1) 
-
-# Exportamos la tabla a un archivo de Excel
-write.xlsx(tabla_educ, "resultados/tabla_educ.xlsx")
-```
-
-El resultado de la función `write.xlsx` fue la creación de un archivo en la carpeta *resultados* con el nombre tabla_educ.xlsx. Si abrimos el archivo, veremos que la tabla se ha exportado correctamente.
-
-![Ejemplo uso write.xlsx](imagenes/tabla1.png){width="100%"}
-
-Ahora bien, si dentro de nuestro flujo de trabajo construimos varias tablas y queremos exportarlas a un único archivo, podemos hacerlo creando un *workbook* con la función `createWorkbook()` y luego añadiendo las tablas con la función `addWorksheet()`. Veamos paso a paso cómo hacerlo. En la primera hoja pondremos la tabla pero con las frecuencias absolutas y en la segunda hoja el objeto `tabla_educ` que creamos anteriormente.
-
-```{r}
-# Creamos un objeto con la tabla de frecuencias absolutas
-tabla_educ_simple <- censo_personas_mendoza %>%
-  filter(p10 != "No aplica") %>% 
-  group_by(p09, p10) %>% 
-  tally() %>% 
-  pivot_wider(names_from = p10, values_from = n) %>% 
-  adorn_totals("row") 
-
-# Creamos un workbook
-wb <- createWorkbook()
-
-# Añadimos la primera hoja
-addWorksheet(wb, sheetName = "Frecuencias absolutas")
-
-# Escribimos la tabla en la primera hoja
-writeData(wb, sheet = "Frecuencias absolutas", x = "Nivel educativo alcanzado por condición de completitud", startRow = 1)
-writeData(wb, sheet = "Frecuencias absolutas", x = tabla_educ_simple,
-          borders = "rows" , borderStyle = "dashed", startRow = 3)
-
-# Añadimos la segunda hoja
-addWorksheet(wb, sheetName = "Frecuencias relativas")
-
-# Escribimos la tabla en la segunda hoja
-writeData(wb, sheet = "Frecuencias relativas", x = "Nivel educativo alcanzado por condición de completitud", startRow = 1)
-writeData(wb, sheet = "Frecuencias relativas", x = tabla_educ, 
-          borders = "rows" , borderStyle = "medium", startRow = 3)
-
-# Guardamos el archivo
-saveWorkbook(wb, "resultados/tablas_educativas.xlsx", overwrite = TRUE)
-
-
-```
-
-Como se ve, el archivo ahora tiene dos hojas, y en cada una de ellas encontramos las tablas que exportamos desde `RStudio`.
-
-![Ejemplo de construcción de hojas en archivo xlsx](imagenes/tabla2.png){width="100%"}
-
-## Exportando a docx
-
-Otra de las situaciones en la que nos podemos encontrar es ante la necesidad de exportar las tablas realizadas directamente a un archivo .docx en donde luego escribiremos texto. Para ello, utilizaremos la librería `flextable`, que nos permite no solo exportar las tablas, sino editarlas para que queden en un formato amigable para reportes, documentos, *papers*, etc.
-
-Nuevamente, esta librería funciona en formato *tidy* y permite el uso de *pipes*. Lo primero que vamos a hacer es tomar el objeto `tabla_educ` que creamos anteriormente y exportarlo a un archivo .docx. Para esto, utilizaremos primero la función `flextable()` para convertir la tabla en un objeto de tipo *flextable*.
-
-```{r message=FALSE, warning=FALSE}
-library(flextable)
-
-flextable(tabla_educ)
-  
-```
-
-La librería incluye muchísimas funciones para editar y automatizar el formato de salida de las tablas. Por ejemplo, podemos cambiar el formato de las celdas, agregar títulos, subtítulos, notas al pie, entre otras cosas.
-
-::: {.callout-tip title="Recomendación"}
-Recomendamos revisar la página de la librería [`flextable`](https://ardata-fr.github.io/flextable-book/index.html){target="_blank"} para conocer las potencialidades que provee.
-:::
-
-Vamos a probar ahora agregar en la primera columna la etiqueta de la variable `p09` y en en una fila superior la etiqueta de la variable `p10`. Exploraremos algunas opciones de la función como `set_header_labels()`, `add_header_row()`, `add_footer_lines()`, `set_caption()`, `theme_vanilla()` y `autofit()`. El resultado lo guardaremos en un objeto llamado `tabla_educ`.
-
-```{r}
-tabla_doc <- flextable(tabla_educ) %>% 
-  set_header_labels(p09 = "Nivel educativo alcanzado") %>% # coloco la etiqueta de la variable p09 en la primera columna
-  add_header_row(values = c("", "Condición de completitud"), colwidths = c(1,2)) %>%  # coloco la etiqueta de la variable p10 en una fila superior
-  add_footer_lines(values = c("Fuente: Censo Nacional de Población, Hogares y Viviendas 2010")) %>% # agrego una nota al pie
-  set_caption("Nivel educativo alcanzado por condición de completitud. Argentina, 2010") %>% # agrego un título a la tabla
-  theme_vanilla() %>% # cambio el tema de la tabla
-  autofit() # ajusto el ancho de las columnas automáticamente
-
-tabla_doc
-```
-
-Finalmente, para exportar la tabla a un archivo .docx, utilizaremos la función `save_as_docx()`, asignándole la carpeta donde queremos guardar el archivo y el nombre del mismo.
-
-```{r}
-save_as_docx(tabla_doc, path = "resultados/tabla_educ.docx")
-```
