@@ -1,0 +1,44 @@
+---
+title: "Untitled"
+output: html_document
+date: "2025-07-23"
+---
+
+## Fuentes de Informacion DataSets
+
+1.  **PARAMETROS BUSQUEDA**
+
+| Campos                | Valores                    |
+|-----------------------|----------------------------|
+| **Area de Gobierno:** | Economía y finanzas        |
+| **Organizacion:**     | Secretaría de Planeamiento |
+| **Tags:**             | Empleo / Empresas          |
+
+2.  **DATASET SELECCIONADO**
+
+-   **Archivo de Datos:** Distribución geográfica de los establecimientos productivos
+
+```{r cars}
+
+url_1 <- "https://cdn.produccion.gob.ar/cdn-cep/establecimientos-productivos/distribucion_establecimientos_productivos_sexo.csv"
+
+
+```
+
+geo_estab_produc \<- read_delim(url_1, delim = ",")
+
+# ver estructura del dataset
+
+glimpse(geo_estab_produc)
+
+#colnames(geo_estab_produc)
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
