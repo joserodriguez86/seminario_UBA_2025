@@ -1,0 +1,142 @@
+---
+title: "Clase 4a - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+author: "José Rodríguez de la Fuente - Albano Vergara Parra"
+institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
+format: 
+  html:
+    theme: journal
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+lang: es
+highlight-style: espresso
+lightbox: true
+cache: false
+execute:
+  warning: false
+  message: false
+---
+
+# Antes de comenzar  
+
+En esta clase utilizaremos las siguientes librerías:  
+
+```{r}
+library(tidyverse)
+```
+
+También vamos a necesitar la base de datos de establecimientos productivos. La vamos a volver a descargar del repositorio de datos abiertos.   
+
+```{r}
+estab_produc <- read_csv("https://cdn.produccion.gob.ar/cdn-cep/establecimientos-productivos/distribucion_establecimientos_productivos_sexo.csv")
+```
+
+
+
+# Organizando datos y variables: selecciones, filtros y orden  
+
+Luego de importar los datos con los que trabajaremos y de haberlos inspeccionado, lo siguiente consiste en organizarlos para posteriormente poder transformarlos, analizarlos e interpretarlos. En este apartado, veremos cómo seleccionar, filtrar y ordenar los datos, basándonos en el ecosistema de funciones que nos provee el paquete `dplyr`^[[*Machete*](https://rstudio.github.io/cheatsheets/translations/spanish/data-transformation_es.pdf){target="_blank"} del paquete `dplyr`] de `tidyverse`. Fundamentalmente, revisaremos las funciones `select()`, `filter()` y `arrange()`.  
+
+Como lo indica su [página web](https://dplyr.tidyverse.org/){target="_blank"}, `dplyr` es una *gramática* de manipulación de datos basado en un conjunto de verbos que permiten realizar las tareas más comunes de manipulación de datos. Estos verbos son intuitivos y fáciles de recordar, lo que facilita su uso.  
+
+
+## Selección de variables
+
+A menudo trabajamos con bases de datos provenientes de registros o encuestas que contienen una gran cantidad de variables. En estos casos, es común que no todas las variables sean de interés para el análisis que queremos realizar. Otras veces, como en nuestro caso, disponemos de bases de datos, como en las encuestas de hogares, que cuentan con una mayor cantidad de filas que de columnas. Así mismo, seleccionar algunas de las variables con las que vamos a trabajar es una buena opción para reducir el tamaño de la base de datos y facilitar su manipulación y guardado.
+
+Supongamos que quisieramos generar un nuevo objeto que contenga solo las variables `cuit`, `anio`, `sucursal` y `provincia_id`. Para ello, utilizamos la función `select()` y le pasamos como argumento el objeto de la base de datos y las variables que queremos seleccionar, generando un nuevo objeto que se llame **estab_produc_seleccion**. 
+
+```{r}
+estab_produc_seleccion <- select(estab_produc, cuit, anio, sucursal, provincia_id)
+```
+
+Fijense en el ambiente de trabajo, que el nuevo objeto tiene las mismas observaciones que el objeto original, pero solo tiene las variables que seleccionamos. La función `select()` acepta también incluir rangos de variables, mediante el operador `:`. Por ejemplo, si quisiéramos seleccionar las variables `cuit` a `provincia_id`, podríamos hacerlo de la siguiente manera. Sobreescribimos el objeto **estab_produc_seleccion** para que contenga las variables seleccionadas.
+
+```{r}
+estab_produc_seleccion <- select(estab_produc, cuit:provincia_id)
+```
+
+Otra forma de seleccionar variables es a través del operador `-`, que nos permite excluir variables. Por ejemplo, si quisiéramos seleccionar todas las variables excepto `quintil`, podríamos hacerlo de la siguiente manera.
+
+```{r}
+estab_produc_seleccion <- select(estab_produc, -quintil)
+```
+
+La función, como todas las del paquete `dplyr`, es muy flexible y permite realizar selecciones de variables de forma muy sencilla. Recomendamos inspeccionar la misma mediante el comando `?select`.
+
+
+## Filtrado de casos
+
+Si con `select` seleccionamos variables, con `filter` seleccionamos casos. Es decir, filtramos las observaciones que cumplen con ciertas condiciones. Para esto es necesario conocer los operadores lógicos y relacionales que vimos en la clase anterior.
+
+Por ejemplo, si sobre el objeto `estab_produc` quisiéramos seleccionar solo los establecimientos de la provincia de Tierra del Fuego, podríamos hacerlo de la siguiente manera.  
+
+```{r}
+estab_produc_seleccion <- filter(estab_produc, provincia_id == 94)
+
+```
+
+El código 2 representa a Tierra del Fuego de acuerdo a la clasificación de **INDEC**. Vemos que en total la provincia cuenta con `r nrow(estab_produc_seleccion)` establecimientos.  
+
+Otro ejemplo que podemos aplicar sobre la base es quedarnos con los establecimientos que tengan al menos una mujer. Para ello, utilizamos el operador `>` que significa distinto, sobre la variabel *proporcion_mujeres*.  
+
+```{r}
+estab_produc_seleccion <- filter(estab_produc, proporcion_mujeres > 0)
+
+```
+
+También podríamos combinar ambos filtros, seleccionando establecimientos que se encuentren en Tierra del Fuego y tengan al menos una mujer, usando el operador lógico *&*.
+
+```{r}
+estab_produc_seleccion <- filter(estab_produc, provincia_id == 94 & proporcion_mujeres > 0)
+```
+
+Las posibilidades son infinitas y dependiendo del filtro que querramos aplicar las expresiones lógico-relacionales pueden ser más o menos complejas.  
+
+::: {.callout-warning title="Cuidado"}
+No confundir el operador lógico **==** con el operador de asignación **=**. El primero se utiliza para comparar valores, mientras que el segundo se utiliza para asignar valores a una variable. En `SPSS` se utiliza el operador **=** para ambos casos. 
+:::
+
+
+## Ordenando los datos
+
+Por último, la función `arrange()` nos permite ordenar los datos de acuerdo a una o más variables. Por ejemplo, si quisiéramos ordenar los establecimiento seleccionados por año de relevamiento, podríamos hacerlo de la siguiente manera. Por defecto, la función ordena de forma ascendente, pero podemos cambiarlo a descendente utilizando la función `desc()`. 
+
+```{r}
+estab_produc_seleccion <- arrange(estab_produc_seleccion, anio)
+
+estab_produc_seleccion <- arrange(estab_produc_seleccion, desc(anio))
+
+```
+
+
+## Facilitando el trabajo: el operador *pipe*
+
+Ahora bien, aprovechando que estamos aprendiendo las principales funciones de `dplyr`, vamos a aprender un nuevo modo de trabajo que nos permite una dinámica más sencilla y eficiente. Para esto haremos uso del operador *pipe* (`%>%`), del paquete `magrittr` (tidyverse), que nos permite encadenar funciones de forma más legible y eficiente.  
+
+![https://magrittr.tidyverse.org/logo.png](https://magrittr.tidyverse.org/logo.png)  
+
+Por ejemplo, partiendo de la base de establecimientos original `estab_produc`, podríamos realizar las siguientes operaciones de selección, filtrado y ordenamiento de la siguiente manera:
+  
+```{r}
+estab_produc_seleccion <- estab_produc %>% 
+  select(cuit, anio, sucursal, provincia_id, proporcion_mujeres) %>% # selecciono las variables que me interesan
+  filter(provincia_id == 94 & proporcion_mujeres > 0) %>% # filtro los casos que me interesan
+  arrange(desc(anio)) # ordeno los datos por año de forma descendente
+```
+
+Fijense que el uso del operador *pipe* no solo nos permite trabajar de un modo más eficiente, sino que también nos simplifica el trabajo de no tener que estar *llamando* al objeto en cada función que aplicamos. La base de datos que estamos transformando, es indicada en la primera línea, y luego cada función se aplica automáticamente sobre la misma. 
+
+
+::: {.callout-tip title="Atención"}
+El operador `%>%` es una de las herramientas más poderosas de `R` e iremos incorporando su uso a lo largo del seminario. Es fácil de entender su lógica de funcionamiento. Permite que vayamos encadenando funciones, una por una, que apuntan a un único objeto que queda declarado en la primera línea. El atajo de teclado para invocarlo es a través de `Ctrl + Shift + M` en *Windows* y `Cmd + Shift + M` en *Mac*.  
+
+Actualmente `RStudio` proporciona un operador pipe nativo `|>` que funciona del mismo modo que `%>%`. 
+:::
+
+![Fuente: https://www.rforecology.com/post/how-to-use-pipes](https://www.rforecology.com/post/how-to-use-pipes/featured_hubecef9b286df4afcc3d745fb42639d5c_96728_720x0_resize_lanczos_2.png)
