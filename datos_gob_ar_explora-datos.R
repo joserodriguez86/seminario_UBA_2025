@@ -37,7 +37,7 @@
               #ARCHIVO DATOS >> Turismo receptivo       
             
       
-      url_2 <-"https://datos.yvera.gob.ar/dataset/4cbf7d4a-702a-4911-8c1e-717a45214902/resource/fdfe0ae4-4acc-4421-aa48-6149a02bc615/download/turistas-no-residentes-serie.csv"
+      url_21 <-"https://datos.yvera.gob.ar/dataset/4cbf7d4a-702a-4911-8c1e-717a45214902/resource/fdfe0ae4-4acc-4421-aa48-6149a02bc615/download/turistas-no-residentes-serie.csv"
       
       
       turismo_receptivo <- read_delim(url_2, delim = ",")    # corroborar separador (coma or punto y coma) #
