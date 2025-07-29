@@ -113,11 +113,9 @@ estab_produc <- read_csv("https://cdn.produccion.gob.ar/cdn-cep/establecimientos
 
 graduadxs_universit <- read_csv("https://datos.produccion.gob.ar/dataset/46df1ebe-d0bb-49a1-96dd-fe9751930682/resource/afbfc04e-6130-448c-953f-ef601f3e8bda/download/base_araucano.csv")
 
-ipc <- read_csv("https://infra.datos.gob.ar/catalog/sspm/dataset/145/distribution/145.3/download/indice-precios-al-consumidor-nivel-general-base-diciembre-2016-mensual.csv")
-
 consumos_culturales <- read_csv("https://datos.cultura.gob.ar/dataset/251c2ac2-e670-451c-9dbf-a4212af225b5/resource/b635d1fc-2161-4901-a21d-7f93d56d99a4/download/base-datos-encc-2022-2023.csv")
 
-censo_sneep <- read_csv("https://datos.jus.gob.ar/dataset/6c03af36-6a1d-4306-b2a8-dd39ad73afb3/resource/2fc756fc-e531-4562-8343-91f810b9fa1b/download/sneep-2023.csv")
+censo_sneep <- read_csv("https://datos.jus.gob.ar/dataset/6c03af36-6a1d-4306-b2a8-dd39ad73afb3/resource/2fc756fc-e531-4562-8343-91f810b9fa1b/download/sneep-2023.csv", progress = TRUE)
 ```
 
 
