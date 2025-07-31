@@ -37,7 +37,6 @@ Para esta clase, necesitaremos tener instaladas las siguientes librerías:
 
 ```{r eval=FALSE}
 install.packages("summarytools")
-install.packages("DescTools")
 ```
 
 ## Base de datos y librerías
@@ -47,7 +46,7 @@ Para revisar estas funciones utilizaremos la base del **censo del Sistema Nacion
 ```{r}
 library(tidyverse)
 
-censo_sneep <- read_csv("https://datos.jus.gob.ar/dataset/6c03af36-6a1d-4306-b2a8-dd39ad73afb3/resource/2fc756fc-e531-4562-8343-91f810b9fa1b/download/sneep-2023.csv", progress = TRUE)
+censo_sneep <- read_csv("https://datos.jus.gob.ar/dataset/6c03af36-6a1d-4306-b2a8-dd39ad73afb3/resource/2fc756fc-e531-4562-8343-91f810b9fa1b/download/sneep-2023.csv")
 
 turismo_emisivo <- read_csv("https://datos.yvera.gob.ar/dataset/4cbf7d4a-702a-4911-8c1e-717a45214902/resource/fd710cb7-1981-43ea-aba3-7a14c356446b/download/turistas-residentes-serie.csv")
 
@@ -59,7 +58,7 @@ consumos_culturales <- read_csv("https://datos.cultura.gob.ar/dataset/251c2ac2-e
 
 Generalmente las encuestas de hogares o de individuos como la *EPH*, el *Latinobarómetro* o, en nuestro caso, la *Encuesta Nacional de Consumos Culturales* (ENCC), al ser relevamientos realizados con muestreos probabilísticos, utilizan ponderadores para corregir el sesgo de la muestra. Es decir, permiten ajustar en los casos en que determinadas poblaciones se encuentran sub-representadas o sobre-representadas en la muestra. Los ponderadores son variables de tipo numéricas que *multiplican* el valor de cada caso para alcanzar una estimación más cercana a la realidad sobre la que se quiere investigar.  
 
-En el caso de la **ENNCC** contamos con dos variables de ponderación:
+En el caso de la **ENCC** contamos con dos variables de ponderación:  
 - *ponderador*: factor de corrección muestral  
 - *expansor*: coeficiente de corrección muestral y expansión de totales personas  
 
@@ -240,59 +239,95 @@ turismo_emisivo_aniopais <- turismo_emisivo %>%
 DT::datatable(turismo_emisivo_aniopais)
 ```
 
-Fijense que mientras que la base `turismo_emisimo` tiene `r  nrow(turismo_emisivo)` casos, la base `turismo_emisivo_aniopais` tiene `r  nrow(turismo_emisivo_aniopais)` ¿A qué se debe está disminución en la cantidad de filas?  
+
+Fijense que mientras que la base `turismo_emisivo` tiene `r  nrow(turismo_emisivo)` casos, la base `turismo_emisivo_aniopais` tiene `r  nrow(turismo_emisivo_aniopais)` ¿A qué se debe está disminución en la cantidad de filas?  
 
 
 
-### Replicando algunos indicadores de INDEC
+### Replicando indicadores publicados
 
-**INDEC** publica informes periódicos con los resultados extraídos de la **EPH** sobre mercado de trabajo, ingresos y pobreza. Vamos a tratar de replicar algunos de los indicadores que brindan los informes de [tasas e indicadores socioeconómicos](https://www.indec.gob.ar/uploads/informesdeprensa/mercado_trabajo_eph_4trim24083C6B9E41.pdf){target="_blank"} y [distribución de ingresos](https://www.indec.gob.ar/uploads/informesdeprensa/ingresos_4trim24D779BFC8BE.pdf){target="_blank"} para practicar el uso de `group_by` y `summarise`.
+Vamos a tomar como ejemplo el informe  [Encuesta Nacional de Consumos Culturales 2022/2023](https://back.sinca.gob.ar/download.aspx?id=3443){target="_blank"}, los datos del *dashboard* del [censo de SNEEP](https://datos.jus.gob.ar/ro/dataset/sneep/archivo/5de62f46-aaf3-4d08-9002-7198d703963c){target="_blank"} y el [informe estadísticas de turismo de junio de 2025 de INDEC](https://www.indec.gob.ar/uploads/informesdeprensa/eti_06_256083EEBF86.pdf){target="_blank"} para practicar el uso de `group_by` y `summarise`.
 
-*Tasa de empleo*: es el porcentaje entre la población ocupada y la población total. Nos basaremos en la variable `ESTADO` que mide la condición de actividad de las personas: ocupado (1), desocupado (2), inactivo (3) y menor de 10 años (4).  
+
+**Porcentaje de personas en el Servicio Penitenciario según situación legal**: Calcularemos la cantidad y el porcentaje de personas que según el tipo de situación legal en la que se encuentran (condenado/a, procesado/a, inimputable).  
+
 
 ```{r}
-eph_ind %>% 
-  group_by(ESTADO) %>% # Agrupamos por condición de actividad
-  summarise(total = sum(PONDERA)) %>% # Sumamos los casos por condición de actividad
-  summarise(tasa_empleo = (total[ESTADO == 1] / sum(total)) * 100) # Calculamos la tasa de empleo
+#Cantidad
+censo_sneep %>% 
+  group_by(situacion_legal_descripcion) %>% 
+  summarise(cantidad = n()) # Con n() contamos la cantidad de casos por situación legal
+
+#Porcentaje
+censo_sneep %>% 
+  group_by(situacion_legal_descripcion) %>% 
+  summarise(cantidad = n()) %>%   # Con n() contamos la cantidad de casos por situación legal
+  mutate(porcentaje = (cantidad / sum(cantidad)) * 100) # Calculamos el porcentaje de personas por situación legal
+
+
+```
+
+Fijense que para calcular el porcentaje, luego de aplicar *summarise* y obtener la cantidad de casos por categoría, debemos usar mutate, ya que vamos a crear una nueva columna sobre nueva base agregada que creamos.  
+
+
+**Porcentaje de personas que asisten a museos**: Calcularemos el porcentaje de personas que asisten a museos según nivel socio-económico. Para ello, utilizaremos la variable *pat1* y *nse_3*. Recordar que debemos utilizar el *ponderador* para realizar las estimaciones correctas.
+
+```{r}
+
+consumos_culturales %>% 
+  group_by(nse_3, pat1) %>% # Agrupamos por nivel socio-económico y asistencia a museos
+  summarise(total = sum(ponderador, na.rm = TRUE)) %>% # Sumamos los casos por nivel socio-económico y asistencia a museos
+  group_by(nse_3) %>% # Agrupamos por nivel socio-económico
+  summarise(porcentaje_museos = (total[pat1 == "SI"] / sum(total)) * 100) # Calculamos el porcentaje de personas que asisten a museos
   
 ```
 
-Fíjense que en este caso, utilizamos dos veces la función `summarise()`. La primera vez para contar la cantidad de personas por condición de actividad y la segunda para calcular la tasa de empleo. A su vez, se han utilizado los corchetes para *filtrar* la fila que debemos utilizar para el cálculo.
+¿Las estimaciones son correctas?  
 
-**Tasa de desocupación**: es el porcentaje entre la población desocupada y la población económicamente activa. Brinda información sobre la proporción de personas que están demandando trabajo y no lo consiguen.
+
+**Géneros mirados en plataformas**: Calcularemos el porcentaje de personas que miran contenidos audiovisuales en plataformas de streaming, agrupados por género. Para ello, utilizaremos la serie de variables comprendidas entre la *tv15_1* a *tv15_11* que indican si se mira o no cada género. Para cada variable, el valor 1 representa que la persona mira ese género y el valor 0 que no lo mira. Entonces, para calcular el porcentaje de personas que miran cada género, debemos:
+
+```{r}
+consumos_culturales %>% 
+  summarise(accion_aventura = sum(ponderador[tv15_1 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            ciencia_ficcion = sum(ponderador[tv15_2 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            suspenso = sum(ponderador[tv15_3 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            terror = sum(ponderador[tv15_4 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            drama = sum(ponderador[tv15_5 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            comedia = sum(ponderador[tv15_6 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            romantico = sum(ponderador[tv15_7 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            documental = sum(ponderador[tv15_8 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            infantiles = sum(ponderador[tv15_9 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            entretenimiento_reality = sum(ponderador[tv15_10 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            animacion = sum(ponderador[tv15_11 == 1], na.rm = T) / sum(ponderador, na.rm = T))
+            
+  
+```
+
+Luego veremos como presentar estos resultados en formato más ordenado, organizando los géneros en una sola columna. 
+
+**Cantidad de turismo emisivo en el mes de mayo de 2025 por país de destino**: En el [informe estadísticas de turismo de junio de 2025 de INDEC](https://www.indec.gob.ar/uploads/informesdeprensa/eti_06_256083EEBF86.pdf){target="_blank"} hay distintos datos respectos al turismo emisivo y receptivo del país. Vamos a calcular la cantidad de personas que en mayo viajó a distintos destinos clasificados. 
+Para hacer los cálculos, primero vamos a *extraer* el dato de mes y año, con la librería `lubridate` y lo vamos a asignar mediante *mutate* a dos nuevas variables. Eso lo asignaremos a un objeto con el mismo nombre (`turismo_emisivo`) para sobreescribirlo. Luego, ya podemos hacer los cálculos.  
+
+Para poder quedarnos únicamente con el mes de mayo y el año 2025 debemos aplicar un filtro, para luego si poder agrupar los datos. Finalmente haremos la sumatoria, adentro de cada país de destino, de la cantidad de viajes identificados en la variable *viajes_de_turistas_residentes*.  
 
 
 ```{r}
-eph_ind %>% 
-  group_by(ESTADO) %>% # Agrupamos por condición de actividad
-  summarise(total = sum(PONDERA)) %>% # Sumamos los casos por condición de actividad
-  summarise(tasa_desoc = (total[ESTADO == 2] / sum(total[ESTADO == 1 | ESTADO == 2])) * 100) # Calculamos la tasa de empleo
+#Reescribimos el objeto con variable anio y mes
+turismo_emisivo <- turismo_emisivo %>% 
+  mutate(mes = month(indice_tiempo),
+         anio = year(indice_tiempo))
+
+#Ahora si podemos hacer el cálculo
+turismo_emisivo %>% 
+  filter(anio == 2025 & mes == 5) %>% #Filtramos el año y mes de interés 
+  group_by(pais_destino) %>% #Agrupamos por país de destino
+  summarise(turistas = sum(viajes_de_turistas_residentes)) #Sumamos al interior de cada país 
+  
+
 ```
 
-Ahora bien, vamos a calcular la tasa de desocupación por región geográfica. Para ello, utilizaremos la variable *REGION* en la función `group_by` dos veces. 
-
-```{r}
-eph_ind %>% 
-  group_by(REGION, ESTADO) %>% # Agrupamos por región y condición de actividad
-  summarise(total = sum(PONDERA)) %>% 
-  group_by(REGION) %>% 
-  summarise(tasa_desoc = (total[ESTADO == 2] / sum(total[ESTADO == 1 | ESTADO == 2])) * 100) # Calculamos la tasa de desocupación
-```
-
-Para calcular la tasa al interior de cada región, luego de obtener los totales de ocupados y desocupados, debemos volver a aplicar el `group_by()` para agrupar por región. De este modo, la función `summarise()` calculará la tasa de desocupación para cada región.  
-
-**Deciles de ingresos per cápita familiar**: es una medida de posición que consiste en ordenar a la población por los montos de ingresos de menor a mayor según el ingreso per cápita familiar(variable *IPCF*), para luego agruparlos en subconjuntos que contengan cada uno el 10%.  
-
-Para conocer los valores del IPCF, vamos a utilizar la función `Quantile()` de la librería `DescTools`, que nos permite calcular los cuantiles de una variable con la opción de usar el ponderador. En la opción `probs` especificamos los percentiles que queremos calcular, en este caso del 0 al 1 con un incremento de 0.1, es decir, los deciles. El ponderador, al trabajar con la variable IPCF, será *PONDIH*.  
 
 
-```{r}
-library(DescTools)
 
-eph_ind %>% 
-  summarise(deciles_ingresos = Quantile(IPCF, probs = seq(0, 1, 0.1), weights = PONDIH)) # Calculamos los deciles de ingresos per cápita familiar
-```
-
-Así el cálculo nos devuelve 11 filas en donde cada una representa el límite inferior y superior de cada decil. Por ejemplo, el decil 1 que agrupa al 10 % de la población con ingresos más bajos, tiene un límite inferior de 0 y un límite superior de **`r format(Quantile(eph_ind$IPCF, probs = 0.1, weights = eph_ind$PONDIH, names = F), scientific = FALSE,  big.mark = ".")`**. Por otro lado, el decil 10 que agrupa al 10 % de la población con ingresos más altos, tiene un límite inferior de **`r format(Quantile(eph_ind$IPCF, probs = 0.9, weights = eph_ind$PONDIH, names = F), scientific = FALSE,  big.mark = ".")`** y un límite superior de **`r format(Quantile(eph_ind$IPCF, probs = 1, weights = eph_ind$PONDIH, names = F), scientific = FALSE,  big.mark = ".")`**.
 

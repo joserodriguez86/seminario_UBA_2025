@@ -45,12 +45,12 @@ knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
 
 -   **Parámetros de Búsqueda**
 
-|                          |                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Area de Gobierno:**    | Economía y finanzas                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Organizacion:**        | Secretaría de Planeamiento                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **Tags:**                | Empleo Empresas                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| **DataSet (Titulo)**     | Distribución geográfica de los establecimientos productivos                                                                                                                                                                                                                                                                                                                                                                              |
+|  |  |
+|------------|------------------------------------------------------------|
+| **Area de Gobierno:** | Economía y finanzas |
+| **Organizacion:** | Secretaría de Planeamiento |
+| **Tags:** | Empleo Empresas |
+| **DataSet (Titulo)** | Distribución geográfica de los establecimientos productivos |
 | **Descripción (notas):** | Datos correspondientes al Sistema Integrado Previsional Argentino y al Sistema de Alta Temprana -Simplificación Registral- de AFIP. Cuenta con información geográfica de los establecimientos productivos del país con sus respectivas desagregaciones sectoriales. Información elaborada por el CEP XXI en conjunto con la Subsecretaría de Planificación, Estudios y Estadísticas del Ministerio de Trabajo, Empleo y Seguridad Social |
 
 -   **Descarga de Datos (archivo)**
@@ -71,7 +71,7 @@ url_1 <- "https://cdn.produccion.gob.ar/cdn-cep/establecimientos-productivos/dis
 
 library(readr)  
 
-geo_estab_produc <- read_delim(url_1, delim = ",")
+geo_estab_produc <- read_csv(url_1)
 
 ```
 
@@ -79,7 +79,7 @@ geo_estab_produc <- read_delim(url_1, delim = ",")
 
 estructura Variables/ campos
 
-```{r}
+```{r echo=FALSE}
 
 dicc_geo_estab <- data.frame(
   variable = names(geo_estab_produc),
@@ -109,12 +109,12 @@ dicc_geo_estab
 
 -   **Parámetros de Búsqueda**
 
-|                          |                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Area de Gobierno:**    | Gobierno y sector público / Población y sociedad                                                                                                                                                                                                                                                                                                                                                                                          |
-| **Organizacion:**        | Subsecretaría de Turismo                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **Tags (etiquetas):**    | turismo internacional                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **DataSet (Titulo)**     | Turismo Receptivo / Turismo Emisivo                                                                                                                                                                                                                                                                                                                                                                                                       |
+|  |  |
+|------------|------------------------------------------------------------|
+| **Area de Gobierno:** | Gobierno y sector público / Población y sociedad |
+| **Organizacion:** | Subsecretaría de Turismo |
+| **Tags (etiquetas):** | turismo internacional |
+| **DataSet (Titulo)** | Turismo Receptivo / Turismo Emisivo |
 | **Descripción (notas):** | Estadísticas de turismo internacional referidas a los viajes de turistas no residentes (turismo receptivo), residentes (emisivos) y saldo entre receptivo y emisivo (balanza) a nivel país, por todos los medios de transporte utilizados (aéreos, terrestres, fluviales y marítimos). Datos en base a la información de la Dirección Nacional de Migraciones y de la Encuesta de Turismo Internacional (INDEC-Subsecretaría de Turismo). |
 
 -   **Descarga de Datos (archivo)**
@@ -187,12 +187,12 @@ dicc_turis_emi
 
 -   **Parámetros de Búsqueda**
 
-|                          |                                                                                                                                                                                       |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Area de Gobierno:**    | Economía y finanzas                                                                                                                                                                   |
-| **Organizacion:**        | Secretaría de Planeamiento y Gestión para el Desarrollo Productivo y de la Bioeconomía                                                                                                |
-| **Tags (etiquetas):**    | Brechas Salariales / Educacion                                                                                                                                                        |
-| **Titulo (DataSet):**    | Graduados universitarios del sistema Araucano (2016-2018)                                                                                                                             |
+|  |  |
+|--------------|---------------------------------------------------------|
+| **Area de Gobierno:** | Economía y finanzas |
+| **Organizacion:** | Secretaría de Planeamiento y Gestión para el Desarrollo Productivo y de la Bioeconomía |
+| **Tags (etiquetas):** | Brechas Salariales / Educacion |
+| **Titulo (DataSet):** | Graduados universitarios del sistema Araucano (2016-2018) |
 | **Descripción (notas):** | Base de datos que contiene, para el período 2019-2021, información sociolaboral de un conjunto de graduados de carreras universitarias de universidades argentinas entre 2016 y 2018. |
 
 -   **Descarga de Datos (archivo)**
@@ -254,12 +254,12 @@ dicc_grad_univ
 
 -   **Parámetros de Búsqueda**
 
-|                          |                                                                                                                                                                     |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Area de Gobierno:**    | Educación, cultura y deportes / Población y sociedad                                                                                                                |
-| **Organizacion:**        | Secretaría de Cultura                                                                                                                                               |
-| **Tags (etiquetas):**    | Consumos Culturales / Encuesta Nacional de Consumos Culturales                                                                                                      |
-| **Titulo (DataSet):**    | Encuesta Nacional de Consumos Culturales 2022-2023                                                                                                                  |
+|  |  |
+|---------------|---------------------------------------------------------|
+| **Area de Gobierno:** | Educación, cultura y deportes / Población y sociedad |
+| **Organizacion:** | Secretaría de Cultura |
+| **Tags (etiquetas):** | Consumos Culturales / Encuesta Nacional de Consumos Culturales |
+| **Titulo (DataSet):** | Encuesta Nacional de Consumos Culturales 2022-2023 |
 | **Descripción (notas):** | La Encuesta Nacional de Consumos Culturales busca conocer en profundidad el comportamiento de la población argentina respecto de los hábitos y consumos culturales. |
 
 -   **Descarga de Datos (archivo)**
@@ -319,12 +319,12 @@ dicc_cons_cult
 
 -   **Parámetros de Búsqueda**
 
-|                          |                                                                                                                                                                                                                                                                                                         |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Area de Gobierno:**    | Justicia, seguridad y legales                                                                                                                                                                                                                                                                           |
-| **Organizacion:**        | Ministerio de Justicia                                                                                                                                                                                                                                                                                  |
-| **Tags (etiquetas):**    | SPF / Sistema Penitenciario                                                                                                                                                                                                                                                                             |
-| **Titulo (dataset):**    | CENSO. Sistema Nacional de Estadísticas sobre Ejecución de la Pena - - 2023                                                                                                                                                                                                                             |
+|  |  |
+|-------------|-----------------------------------------------------------|
+| **Area de Gobierno:** | Justicia, seguridad y legales |
+| **Organizacion:** | Ministerio de Justicia |
+| **Tags (etiquetas):** | SPF / Sistema Penitenciario |
+| **Titulo (dataset):** | CENSO. Sistema Nacional de Estadísticas sobre Ejecución de la Pena - - 2023 |
 | **Descripción (notas):** | Información recopilada en el censo realizado sobre el total de la población detenida al día 31 de diciembre de cada año, en cada establecimiento de la República Argentina. Este recurso contiene el censo del Sistema Nacional de Estadísticas sobre Ejecución de la Pena correspondiente al año 2023. |
 
 -   **Descarga de Datos (archivo)**
@@ -345,7 +345,7 @@ ruta_5 <- "C:/Users/alban/repositorios/seminario_UBA_2025/sneep-2023.csv"
 
 library(readr)  
 
-serv_penitenciario <- read.csv(ruta_5, sep = ",")
+serv_penitenciario <- read_csv("https://datos.jus.gob.ar/dataset/6c03af36-6a1d-4306-b2a8-dd39ad73afb3/resource/2fc756fc-e531-4562-8343-91f810b9fa1b/download/sneep-2023.csv")
 
 ```
 
