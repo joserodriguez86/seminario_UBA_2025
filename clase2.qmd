@@ -42,7 +42,7 @@ knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
 -   Código abierto: amplia cantidad de paquetes
 -   Es gratuito
 -   Puede abrir varias bases de datos al mismo tiempo: usa la memoria virtual
--   Gran comunidad de usuarios (foros)
+-   Gran comunidad de usuarios (foros) - **sentido de pertenencia**
 -   Uso extendido en la ciencia (sociales) y ámbito profesional
 -   Producción de gráficos de alta calidad
 -   Capacidad de elaborar tableros, aplicaciones, documentos, páginas web, presentaciones, etc.
