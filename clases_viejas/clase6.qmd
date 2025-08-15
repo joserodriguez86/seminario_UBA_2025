@@ -1,0 +1,359 @@
+---
+title: "Clase 6 - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+author: "José Rodríguez de la Fuente - Albano Vergara Parra"
+institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
+format: 
+  html:
+    theme: journal
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+    code-annotations: hover
+lang: es
+highlight-style: espresso
+lightbox: true
+cache: false
+---
+
+
+# Construcción de tablas
+
+En esta apartado revisaremos distintas aproximaciones a la construcción de tablas de frecuencias y de tablas de contingencia. Quizás `R` no se destaque por la simpleza del análisis exploratorio a través de tablas, pero existen infinidad de paquetes que nos permitirán llegar a resultados similares. Empezaremos explorando la funciones disponibles en **R base**, luego revisaremos algunos paquetes que harán la mayor parte del trabajo por nosotros y, por último, veremos cómo podemos hacerlo con `dplyr` y `tidyr` de `tidyverse`.
+
+## La función `table()`
+
+La función `table()` es una de las más utilizadas para la construcción de tablas de frecuencias, tanto para el análisis univariable como bivariable. Para esta sección, a los fines agilizar el proceso de trabajo, vamos a seleccionar trabajar con los casos de la provincia de Mendoza, creando el objeto `censo_personas_mendoza`.
+
+```{r}
+censo_personas_mendoza <- censo_personas %>% 
+  filter(provincia == 50)
+```
+
+Ahora vamos a identificar a las variables educativas *nivel educativo que cursa o cursó* (`p09`) y *completó ese nivel* (`p10`) y vamos a convertirlas a factores.
+
+```{r}
+censo_personas_mendoza <- censo_personas_mendoza %>% 
+  mutate(p09 = factor(p09, labels = c("No aplica",
+                                      "Inicial",
+                                      "Primario",
+                                      "EGB",
+                                      "Secundario",
+                                      "Polimodal",
+                                      "Sup. no universitario",
+                                      "Universitario",
+                                      "Posgrado",
+                                      "Educación especial")),
+         p10 = factor(p10, labels = c("No aplica",
+                                      "Completó",
+                                      "No completó")))
+```
+
+Ahora si, con la función `table()` vamos a construir una tabla de frecuencias de la variable `p09`. Como se verá, la salida es rápida pero con información escueta: no tenemos frecuencias relativas, ni acumuladas.
+
+```{r}
+table(censo_personas_mendoza$p09)
+```
+
+Si queremos calcular las proporciones o frecuencias relativas, podemos llamar a la función `prop.table()` sobre la función ya especificada:
+
+```{r}
+prop.table(table(censo_personas_mendoza$p09))
+```
+
+Por último, si queremos presentar los resultados en porcentajes, lo multiplicamos por 100:
+
+```{r}
+prop.table(table(censo_personas_mendoza$p09)) * 100
+```
+
+Estas funciones nos sirven también para tablas cruzadas. Por ejemplo calculemos el nivel educativo de las personas según si han completado o no ese nivel.
+
+```{r}
+table(censo_personas_mendoza$p09, censo_personas_mendoza$p10)
+```
+
+Y si quisiéramos calcular los porcentajes por fila...
+
+```{r}
+prop.table(table(censo_personas_mendoza$p09, censo_personas_mendoza$p10), margin = 1) * 100
+```
+
+Como verán, la función `table()` es muy útil para la construcción rápida de tablas de frecuencias, pero no nos permite realizar análisis complementarios, ni nos otorgan una salida en formato **tidy**.
+
+## Algunas librerías para la construcción de tablas
+
+A veces necesitamos hacer procesamientos rápidos, sin necesidad de escribir mucho código. Si nuestra opción es quedarnos usando `R` y no migrar a otros programas, podemos utilizar algunas librerías que nos facilitarán la construcción de tablas. Les dejamos una lista con la variedad de librerías que pueden utilizar:
+
+-   `janitor`
+-   `expss`
+-   `summarytools`
+-   `gmodels`
+-   `sjmisc`
+
+Vamos a realizar una primera prueba utilizando la librería `sjmisc`. En primer lugar, la función `frq()` nos devuelve una tabla de frecuencias algo más completa que la función `table()`.
+
+```{r message=FALSE, warning=FALSE}
+library(sjmisc)
+
+censo_personas_mendoza %>% 
+  frq(p09)
+```
+
+El mismo paquete nos permite realizar tablas cruzadas con la función `flat_table`.
+
+```{r}
+censo_personas_mendoza %>% 
+  flat_table(p09, p10, margin = "row")
+```
+
+`summarytools` es otra librería que nos permite realizar tablas de frecuencias. En este caso, la función `freq()` nos devuelve una tabla de frecuencias similar a la función anterior.
+
+```{r message=FALSE, warning=FALSE}
+library(summarytools)
+
+censo_personas_mendoza %>% 
+  freq(p09)
+```
+
+Del mismo modo, la función `ctable()` realiza el cruce entre ambas variables, pudiendo elegir calcular las proporciones por fila, columna o total con la opción `prop`. El problema es que esta función no funciona con el *pipe* `%>%`.
+
+```{r}
+ctable(censo_personas_mendoza$p09, censo_personas_mendoza$p10, prop = "r")
+```
+
+## Tablas con `dplyr` y `tidyr`
+
+Si bien las librerías anteriores nos permiten realizar tablas de frecuencias de forma rápida y sencilla, no siguen la filosofía del `tidyverse` que venimos utilizando y que nos servirá para trabajar en forma ordenada en cada momento de la investigación. Quizás, a principio, la elaboración de tablas con estás funciones sea algo complicado, pero a futuro nos facilitará la posterior presentación de los resultados en documentos o en gráficos.
+
+La secuencia de pasos es similar a como lo hemos hecho en el apartado de la [sección @sec-agregacion]. Primero agrupamos la información (`group_by()`) y luego contamos los casos. Recuerden que esto último podemos hacerlo mediante la función `summarise()`, `count()` o `tally()`.
+
+```{r}
+censo_personas_mendoza %>% 
+  group_by(p09) %>% 
+  summarise(frecuencia = n())
+
+censo_personas_mendoza %>%
+  group_by(p09) %>% 
+  count()
+
+censo_personas_mendoza %>%
+  group_by(p09) %>% 
+  tally()
+```
+
+Para realizar tablas bivariadas, lo primero que adicionaremos es la segunda variable a la función `group_by()`. Luego, contaremos los casos con cualquiera de la funciones de conteo.
+
+```{r}
+censo_personas_mendoza %>% 
+  group_by(p09, p10) %>% 
+  tally()
+```
+
+Como verán, la tabla se nos presenta en un formato extraño, que se denomina *long* o largo, debido a que las dos variables de interés se sitúan en las primeras columnas y las frecuencias en la última. En algunos casos, como por ejemplo para la construcción de gráficos, este formato es apropiado. Pero para la presentación de tablas, necesitamos un formato de tipo *wide* o ancho.
+
+Para presentar la tabla en un formato más amigable, utilizaremos la función `pivot_wider` de `tidyr`. Lo que debemos declarar en dicha función es cual es la variable que pasará a mostrar sus categorías en las columnas y de dónde surgirán los valores que irán en las celdas. En nuestro caso, las columnas se completarán con las categorías de la variable `p10` y los valores serán las frecuencias de los conteos de la variable `n` que construimos en el paso anterior.
+
+```{r}
+censo_personas_mendoza %>%
+  group_by(p09, p10) %>% 
+  tally() %>% 
+  pivot_wider(names_from = p10, values_from = n)
+```
+
+Vamos a seguir emprolijando la tabla, eliminando los casos de la variable `p10` que son *no aplica*.
+
+```{r}
+censo_personas_mendoza %>%
+  filter(p10 != "No aplica") %>% 
+  group_by(p09, p10) %>% 
+  tally() %>% 
+  pivot_wider(names_from = p10, values_from = n)
+```
+
+Como se vera, la tabla se presenta de forma más ordenada y clara, sin embargo, aún no hemos calculado las proporciones. Para ello, lo mejor es valerse de la librería janitor que automáticamente nos calculará distintos tipos de proporciones, nos presentará los datos en formato porcentual y nos dejará agregar los totales por fila o columna. Exploremos la librería.
+
+```{r message=FALSE, warning=FALSE}
+library(janitor)
+
+censo_personas_mendoza %>%
+  filter(p10 != "No aplica") %>% 
+  group_by(p09, p10) %>% 
+  tally() %>% 
+  pivot_wider(names_from = p10, values_from = n) %>% 
+  adorn_totals("row") %>% # Agregamos los totales por fila
+  adorn_percentages("row") %>% # Calculamos las proporciones por fila
+  adorn_pct_formatting(digits = 1) # Presentamos los valores en formato porcentual
+```
+
+### El formato *tidy*
+
+Disponer los datos en forma ordenada implica que: 1) cada variable es una columna, 2) cada observación es una fila y 3) cada valor se encuentra en una celda. Sin embargo muchas veces, los datos distan de presentarse en ficho formato. Por ejemplo, es frecuente que:  
+
+- los encabezados de las columnas sean valores,
+- muchas variables sean guardadas en una columna,
+- las variables se encuentren en las filas y columnas, 
+- múltiples unidades de análisis se encuentren en una misma tabla,
+- una unidad de análisis se encuentre en varias tablas.  
+
+Para resolver estos problemas, `tidyr` nos ofrece las funciones `pivot_longer()` y `pivot_wider()`. La primera nos permite pasar de un formato ancho a uno largo, mientras que la segunda nos permite pasar de un formato largo a uno ancho.
+
+![Formato ancho](imagenes/pivot_longer.png){width="80%"}
+
+`pivot_longer()` nos permite pasar de un formato ancho a uno largo. Para ello, debemos especificar las columnas que queremos mantener y las que queremos transformar en filas. Con la función *names_to* especificamos el nombre de la nueva columna que contendrá los nombres de las columnas que estamos transformando en filas, y con *values_to* especificamos el nombre de la nueva columna que contendrá los valores de las columnas que estamos transformando en filas.
+
+![Formato largo](imagenes/pivot_wider.png){width="80%"}
+
+`pivot_wider()` nos permite pasar de un formato largo a uno ancho. Para ello, debemos especificar las columnas que queremos mantener y las que queremos transformar en columnas. Con la función *names_from* especificamos el nombre de la nueva columna que contendrá los nombres de las columnas que estamos transformando en columnas, y con *values_from* especificamos el nombre de la nueva columna que contendrá los valores de las columnas que estamos transformando en columnas.
+
+
+## Medidas de asociación
+
+Las medidas de asociación son estadísticos que nos permiten evaluar la relación entre dos variables. En el caso de las tablas de contingencia, las medidas de asociación nos permiten evaluar si existe una relación entre las variables y, en caso de existir, cuál es la fuerza y dirección de esa relación (en el caso de variables ordinales).
+
+Existen muchas medidas de asociación, pero aquí señalaremos algunas de las más comunes y frecuentemente utilizadas:
+
+-   **Chi-cuadrado de Pearson**: es una medida de asociación que nos permite evaluar si existe una relación entre dos variables categóricas. La hipótesis nula es que no existe relación entre las variables. Si el valor de chi-cuadrado es significativo, rechazamos la hipótesis nula y concluimos que existe una relación entre las variables. Su mínimo es 0 y su máximo es infinito. No mide la fuerza de la asociación.
+
+-   **V de Cramer**: está basada en la prueba de Chi cuadrado y está pensada para variables nominales. Permite determinar la fuerza de la asociación. Su valor oscila entre 0 y 1. A mayor valor, mayor es la fuerza de la asociación.
+
+-   **Tau de Kendall**: es una medida de asociación no paramétrica que mide la asociación entre dos variables ordinales. Su valor oscila entre -1 y 1. Valores positivos indican una asociación directa, valores negativos una asociación inversa y 0 la ausencia de asociación.
+
+-   **Residuos**: los residuos son una medida de asociación que nos permite identificar en qué celdas de la tabla de contingencia se concentra la asociación. Los residuos positivos indican que la frecuencia observada es mayor que la esperada, mientras que los residuos negativos indican que la frecuencia observada es menor que la esperada.
+
+Vamos a calcular el chi-cuadrado de Pearson y la V de Cramer para evaluar la asociación existente entre el nivel educativo alcanzado (`p09`) y la utilización de computadora (`p12`). Para ello, utilizaremos la función `chisq.test()` de `R base` y la función `CramerV` de la librería `DescTools`.
+
+```{r message=FALSE, warning=FALSE}
+library(DescTools)
+
+#Creamos un nuevo objeto sin los casos que no aplican en p12
+censo_personas_mendoza2 <- censo_personas_mendoza %>% 
+  filter(p12 != 0) 
+
+# Calculamos el chi-cuadrado de Pearson
+chisq.test(censo_personas_mendoza2$p09, censo_personas_mendoza2$p12)
+
+# Calculamos otros coeficientes
+CramerV(censo_personas_mendoza2$p09, censo_personas_mendoza2$p12)
+
+```
+
+El resultado del chi-cuadrado de Pearson nos indica que existe una relación significativa entre las variables, ya que el valor de p es menor a 0.05. Por otro lado, la V de Cramer nos indica que la fuerza de la asociación es alta, ya que el valor es `r round(CramerV(censo_personas_mendoza2$p09, censo_personas_mendoza2$p12), digits = 3)`, es decir, el nivel educativo alcanzado influencia, como es esperado, el uso o no de computadoras.
+
+# Exportando los resultados
+
+Hasta aquí hemos trabajado con tablas de frecuencias y con tablas de contingencia. Si lo que necesitamos es explorar los datos para conocer la información que disponemos, probar hipótesis o realizar análisis descriptivos, con las salidas gráficas que nos ofrece `RStudio` nos bastaría. Sin embargo, a veces, necesitamos presentar los resultados en informes, documentos o presentaciones. Para ello, necesitamos exportar los resultados a formatos comúnmente como xlsx, docx, pdf, etc.
+
+En esta sección vamos a mostrar algunas alternativas para exportar los resultados a una hoja de calculo (xlsx) y a un documento de texto (docx). No obstante, existen muchas otras opciones de exportación que pueden explorarse y que se complementan muy bien con el análisis estadístico en `RStudio`, tales como html o pdf.
+
+::: {.callout-tip title="Recomendación"}
+A lxs interesadxs les recomendamos revisar los sistemas de publicación científica tales como `RMarkdown` y `Quarto`. Ambos sistemas permiten la integración de código `R` con texto, gráficos y tablas, y la exportación a distintos formatos de salida.
+:::
+
+## Exportando a xslx
+
+Para exportar los resultados a una hoja de cálculo, utilizaremos la librería `openxlsx`. Esta librería nos permite exportar los resultados a un archivo de `Excel`, añadir hojas de calculo, modificar el formato de las celdas, entre otras cosas. Vamos a revisar las funciones más sencillas del paquete. Para ello, crearemos un objeto con la tabla cruzada que creamos en la sección anterior.
+
+```{r message=FALSE, warning=FALSE}
+library(openxlsx)
+
+# Creamos un objeto con la tabla de frecuencias
+tabla_educ <- censo_personas_mendoza %>%
+  filter(p10 != "No aplica") %>% 
+  group_by(p09, p10) %>% 
+  tally() %>% 
+  pivot_wider(names_from = p10, values_from = n) %>% 
+  adorn_totals("row") %>% 
+  adorn_percentages("row") %>% 
+  adorn_pct_formatting(digits = 1) 
+
+# Exportamos la tabla a un archivo de Excel
+write.xlsx(tabla_educ, "resultados/tabla_educ.xlsx")
+```
+
+El resultado de la función `write.xlsx` fue la creación de un archivo en la carpeta *resultados* con el nombre tabla_educ.xlsx. Si abrimos el archivo, veremos que la tabla se ha exportado correctamente.
+
+![Ejemplo uso write.xlsx](imagenes/tabla1.png){width="100%"}
+
+Ahora bien, si dentro de nuestro flujo de trabajo construimos varias tablas y queremos exportarlas a un único archivo, podemos hacerlo creando un *workbook* con la función `createWorkbook()` y luego añadiendo las tablas con la función `addWorksheet()`. Veamos paso a paso cómo hacerlo. En la primera hoja pondremos la tabla pero con las frecuencias absolutas y en la segunda hoja el objeto `tabla_educ` que creamos anteriormente.
+
+```{r}
+# Creamos un objeto con la tabla de frecuencias absolutas
+tabla_educ_simple <- censo_personas_mendoza %>%
+  filter(p10 != "No aplica") %>% 
+  group_by(p09, p10) %>% 
+  tally() %>% 
+  pivot_wider(names_from = p10, values_from = n) %>% 
+  adorn_totals("row") 
+
+# Creamos un workbook
+wb <- createWorkbook()
+
+# Añadimos la primera hoja
+addWorksheet(wb, sheetName = "Frecuencias absolutas")
+
+# Escribimos la tabla en la primera hoja
+writeData(wb, sheet = "Frecuencias absolutas", x = "Nivel educativo alcanzado por condición de completitud", startRow = 1)
+writeData(wb, sheet = "Frecuencias absolutas", x = tabla_educ_simple,
+          borders = "rows" , borderStyle = "dashed", startRow = 3)
+
+# Añadimos la segunda hoja
+addWorksheet(wb, sheetName = "Frecuencias relativas")
+
+# Escribimos la tabla en la segunda hoja
+writeData(wb, sheet = "Frecuencias relativas", x = "Nivel educativo alcanzado por condición de completitud", startRow = 1)
+writeData(wb, sheet = "Frecuencias relativas", x = tabla_educ, 
+          borders = "rows" , borderStyle = "medium", startRow = 3)
+
+# Guardamos el archivo
+saveWorkbook(wb, "resultados/tablas_educativas.xlsx", overwrite = TRUE)
+
+
+```
+
+Como se ve, el archivo ahora tiene dos hojas, y en cada una de ellas encontramos las tablas que exportamos desde `RStudio`.
+
+![Ejemplo de construcción de hojas en archivo xlsx](imagenes/tabla2.png){width="100%"}
+
+## Exportando a docx
+
+Otra de las situaciones en la que nos podemos encontrar es ante la necesidad de exportar las tablas realizadas directamente a un archivo .docx en donde luego escribiremos texto. Para ello, utilizaremos la librería `flextable`, que nos permite no solo exportar las tablas, sino editarlas para que queden en un formato amigable para reportes, documentos, *papers*, etc.
+
+Nuevamente, esta librería funciona en formato *tidy* y permite el uso de *pipes*. Lo primero que vamos a hacer es tomar el objeto `tabla_educ` que creamos anteriormente y exportarlo a un archivo .docx. Para esto, utilizaremos primero la función `flextable()` para convertir la tabla en un objeto de tipo *flextable*.
+
+```{r message=FALSE, warning=FALSE}
+library(flextable)
+
+flextable(tabla_educ)
+  
+```
+
+La librería incluye muchísimas funciones para editar y automatizar el formato de salida de las tablas. Por ejemplo, podemos cambiar el formato de las celdas, agregar títulos, subtítulos, notas al pie, entre otras cosas.
+
+::: {.callout-tip title="Recomendación"}
+Recomendamos revisar la página de la librería [`flextable`](https://ardata-fr.github.io/flextable-book/index.html){target="_blank"} para conocer las potencialidades que provee.
+:::
+
+Vamos a probar ahora agregar en la primera columna la etiqueta de la variable `p09` y en en una fila superior la etiqueta de la variable `p10`. Exploraremos algunas opciones de la función como `set_header_labels()`, `add_header_row()`, `add_footer_lines()`, `set_caption()`, `theme_vanilla()` y `autofit()`. El resultado lo guardaremos en un objeto llamado `tabla_educ`.
+
+```{r}
+tabla_doc <- flextable(tabla_educ) %>% 
+  set_header_labels(p09 = "Nivel educativo alcanzado") %>% # coloco la etiqueta de la variable p09 en la primera columna
+  add_header_row(values = c("", "Condición de completitud"), colwidths = c(1,2)) %>%  # coloco la etiqueta de la variable p10 en una fila superior
+  add_footer_lines(values = c("Fuente: Censo Nacional de Población, Hogares y Viviendas 2010")) %>% # agrego una nota al pie
+  set_caption("Nivel educativo alcanzado por condición de completitud. Argentina, 2010") %>% # agrego un título a la tabla
+  theme_vanilla() %>% # cambio el tema de la tabla
+  autofit() # ajusto el ancho de las columnas automáticamente
+
+tabla_doc
+```
+
+Finalmente, para exportar la tabla a un archivo .docx, utilizaremos la función `save_as_docx()`, asignándole la carpeta donde queremos guardar el archivo y el nombre del mismo.
+
+```{r}
+save_as_docx(tabla_doc, path = "resultados/tabla_educ.docx")
+```
