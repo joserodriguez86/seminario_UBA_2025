@@ -1,5 +1,5 @@
 ---
-title: "Clase 2 - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+title: "Clase 3 - Datos Abiertos de Investigación. Parte 2. Portal Datos Argentina"
 author: "Albano Blas Vergara,  José Rodríguez de la Fuente"
 institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
 format: 
@@ -23,30 +23,28 @@ knitr::opts_chunk$set(dev.args = list(png = list(type = "cairo")))
 
 # 1. DATOS ABIERTOS APN-ARG (recursos)
 
-## 1.1. ESTABLECIMIENTOS PRODUCTIVOS
+## 1.1. Introducción Marco
 
--   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
+-   El portal de Datos Argentina (datos gob ar) es un sistema de información que recopila y organiza un conjunto de datos abiertos provenientes de muchas organizaciones y brinda un acceso único a los mismos.
 
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
+-   Un portal de datos es un sistema de catálogos conformados por datasets (conjunto de datos) y metadatos que son las características que facilitan su comprensión. Los metadatos describen como está organizada la información y la política de gestión de acceso.
 
--   A continuación...
+## 1.2. Esquema Diagrama
 
-## 1.2. ESTABLECIMIENTOS PRODUCTIVOS
+-   En el portal de Datos Argentina, el acceso a la información se estructura a través del sitio web <https://datos.gob.ar/> en el que, a través de iconos, pestañas, buscadores se procede a la búsqueda y acceso de los datos públicos. Otro modo de acceso es a través de las APIs.
 
--   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
-
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
+-   Una API es una interfaz de programación de aplicaciones (la sigla API del inglés "Application Programming Interface). Esta interface, manipulada a través de códigos de programación permite consultas personalizadas del sistema que contiene los datos públicos.
 
 ![Recursos del DataSet "Establecimientos Productivos" (datos.gob.ar)](imagenes/Diagrama%20DatosAbiertos%20GobAr.jpg)
 
 # 2. FUENTES DE INFORMACIÓN (datasets)
 
-## 2.1. ESTABLECIMIENTOS PRODUCTIVOS
+## 2.1. Establecimientos Productivos
 
 -   **Parámetros de Búsqueda**
 
 |                          |                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------|------------------------------------------------------|
 | **Area de Gobierno:**    | Economía y finanzas                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | **Organizacion:**        | Secretaría de Planeamiento                                                                                                                                                                                                                                                                                                                                                                                                               |
 | **Tags:**                | Empleo Empresas                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -97,7 +95,7 @@ dicc_geo_estab
 
 -   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
 
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
+-   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos.
 
 -   A continuación...
 
@@ -105,12 +103,12 @@ dicc_geo_estab
 
 ![Recursos del DataSet "Establecimientos Productivos" (datos.gob.ar)](imagenes/dicccionario_geo_estab_produc.jpg)
 
-## 2.2. TURISMO EMISIVO Y RECEPTIVO
+## 2.2. Turismo Emisivo y Receptivo
 
 -   **Parámetros de Búsqueda**
 
 |                          |                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|--------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------|------------------------------------------------------|
 | **Area de Gobierno:**    | Gobierno y sector público / Población y sociedad                                                                                                                                                                                                                                                                                                                                                                                          |
 | **Organizacion:**        | Subsecretaría de Turismo                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **Tags (etiquetas):**    | turismo internacional                                                                                                                                                                                                                                                                                                                                                                                                                     |
@@ -173,22 +171,20 @@ dicc_turis_emi
 
 <!-- -->
 
--   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
+-   En este caso, se cuenta con una Ficha Técnica del recurso en el que se detalla el marco conceptual, consideraciones metodológicas y una descripción de las estadísticas de turismo internacional que se ponen a disposición en datos públicos.
 
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
-
--   A continuación...
+-   Otro aspecto relevante es que en el mismo sitio de Datos Argentina se detallan y describen los campos de información que contiene el repositorio estructurado (csv).
 
 [SITIO WEB DOCUMENTACION](https://datos.yvera.gob.ar/dataset/4cbf7d4a-702a-4911-8c1e-717a45214902/resource/200bf770-d6f2-4847-af20-678fc0f13a0f/download/tur-inter-data.pdf)
 
 ![Recursos del DataSet (datos.gob.ar)](imagenes/dicccionario_turismo_receptivo.jpg)
 
-## 2.3. GRADUADOS UNIVERSITARIOS
+## 2.3. Graduados Universitarios
 
 -   **Parámetros de Búsqueda**
 
 |                          |                                                                                                                                                                                       |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------|------------------------------------------------------|
 | **Area de Gobierno:**    | Economía y finanzas                                                                                                                                                                   |
 | **Organizacion:**        | Secretaría de Planeamiento y Gestión para el Desarrollo Productivo y de la Bioeconomía                                                                                                |
 | **Tags (etiquetas):**    | Brechas Salariales / Educacion                                                                                                                                                        |
@@ -236,13 +232,13 @@ dicc_grad_univ
 
 <!-- -->
 
--   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
+-   En el caso de la Base Araucano, se cuenta con una Ficha sintética que detalla muy brevemente el marco teórico-metodológico.
 
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
+-   En este caso los campos de información que contiene el repositorio estructurado (csv) no estan en el portal de Datos Argentina, sino en el documento-ficha.
 
--   A continuación...
+-   Aquí, se cuenta con un archivo en formato excel en que se específican las codificaciones de las categorías cada una de las variables cualitativas que contiene el recurso.
 
-[SITIO WEB DOCUMENTACION](https://datos.produccion.gob.ar/dataset/46df1ebe-d0bb-49a1-96dd-fe9751930682/resource/a2b14e98-9874-4b2a-b641-cdba6676de45/download/metodologia-araucano-da.pdf)
+    [SITIO WEB DOCUMENTACION](https://datos.produccion.gob.ar/dataset/46df1ebe-d0bb-49a1-96dd-fe9751930682/resource/a2b14e98-9874-4b2a-b641-cdba6676de45/download/metodologia-araucano-da.pdf)
 
 ![Recursos del DataSet (datos.gob.ar)](imagenes/dicccionario_graduados_univer_1.jpg)
 
@@ -250,12 +246,12 @@ dicc_grad_univ
 
 ![Recursos del DataSet (datos.gob.ar)](imagenes/dicccionario_graduados_univer_2.jpg)
 
-## 2.4. CONSUMOS CULTURALES
+## 2.4. Consumos Culturales
 
 -   **Parámetros de Búsqueda**
 
 |                          |                                                                                                                                                                     |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------|------------------------------------------------------|
 | **Area de Gobierno:**    | Educación, cultura y deportes / Población y sociedad                                                                                                                |
 | **Organizacion:**        | Secretaría de Cultura                                                                                                                                               |
 | **Tags (etiquetas):**    | Consumos Culturales / Encuesta Nacional de Consumos Culturales                                                                                                      |
@@ -301,11 +297,11 @@ dicc_cons_cult
 
 <!-- -->
 
--   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
+-   En el caso de la ENCC, se cuenta con documento que específica marco conceptual, objetivos, metodológia la encuesta de consumo que se encuentra a disposición en datos públicos.
 
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
+-   Un aspecto a tomar en cuenta es que los microdatos de la encuesta presentan ponderadores (a diferencia de los recursos anteriores) y se explicitan algunas nociones sobre los mismos. Asi también, se pone a disposición el cuestionario (instrumento) aplicado en el relevamiento.
 
--   A continuación...
+-   En este recurso, los campos de información y las codificaciones que contiene el archivo estructurado (csv) no estan en el portal de Datos Argentina.
 
 [SITIO WEB DOCUMENTO METODOLOGICO](https://datos.cultura.gob.ar/dataset/251c2ac2-e670-451c-9dbf-a4212af225b5/resource/da9823d4-543b-4efc-bb43-13d9df7344d5/download/metodologia-manual-uso-base-datos-encc-2022-2023.pdf)
 
@@ -315,12 +311,12 @@ dicc_cons_cult
 
 ![Cuestionario](imagenes/dicccionario_cuestionario_encc22.jpg)
 
-## 2.5. POBLACION CARCELARIA
+## 2.5. Poblacion Carcelaria
 
 -   **Parámetros de Búsqueda**
 
 |                          |                                                                                                                                                                                                                                                                                                         |
-|--------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|------------------|------------------------------------------------------|
 | **Area de Gobierno:**    | Justicia, seguridad y legales                                                                                                                                                                                                                                                                           |
 | **Organizacion:**        | Ministerio de Justicia                                                                                                                                                                                                                                                                                  |
 | **Tags (etiquetas):**    | SPF / Sistema Penitenciario                                                                                                                                                                                                                                                                             |
@@ -369,11 +365,11 @@ dicc_serv_penit
 
 <!-- -->
 
--   La metodología hace referencia a las definiciones conceptuales del proceso de recolección de la información. En este caso...
+-   A diferencia de todos los recursos anteriores presentados, este archivo de datos presenta la ficha y documentación asociada en el repositorio GitHub.
 
--   El diccionario del archivo de datos, es fundamental para comprender a qué hace referencia cada uno de las variables de recurso como así también para entender la codificación de los datos. En este caso...
+-   Los campos de información y las codificaciones que contiene el archivo estructurado (csv) no estan en el portal de Datos Argentina sino en el mismo repositorio GitHub como formato plano de texto.
 
--   A continuación...
+-   Otro aspecto novedoso de este recurso (a diferencia de los anteriores) es que se presenta en el mismo portal de Datos Argentina, un sistema de visualizadores dinámicos de información. Este posibilita generar graficos interactivos y descargarlos.
 
 [GITHUB DOCUMENTO METODOLOGICO](https://github.com/datos-justicia-argentina/Sistema-Nacional-de-Estadisticas-sobre-Ejecucion-de-la-Pena-SNEEP/blob/master/Sistema-Nacional-de-Estadisticas-sobre-Ejecucion-de-la-Pena-SNEEP-metadata.md)
 
