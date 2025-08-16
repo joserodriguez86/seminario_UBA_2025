@@ -83,7 +83,7 @@ Desde `R` también podemos abrir otros formatos comúnmente utilizados de forma 
 
 Por ejemplo, descarguemos la base de Latinobarómetro nuevamente pero en formato *.sav*. La función que utilizaremos es `read_spss()` del paquete `haven` y asignaremos la base a un objeto llamado *latinobatrometro_spss*.
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(haven)
 latinobarometro_spss <- read_spss("bases/Latinobarometro_2023_Esp_Spss_v1_0.sav")
 ```
