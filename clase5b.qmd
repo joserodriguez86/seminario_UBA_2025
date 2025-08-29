@@ -1,7 +1,8 @@
 ---
-title: "Clase 5a - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+title: "Clase 5b - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
 author: "José Rodríguez de la Fuente - Albano Vergara Parra"
 institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
+lang: es
 format: 
   html:
     theme: journal
@@ -14,14 +15,28 @@ format:
     code-copy: hover
     code-tools: false
     code-annotations: hover
-lang: es
+    lightbox: true
+  pdf: 
+    toc: true
+    pdf-engine: xelatex
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    highlight-style: espresso
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+         \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
 highlight-style: espresso
-lightbox: true
 cache: false
+prefer-html: true
 execute:
   warning: false
   message: false
 ---
+
 
 # Resumen y agregación de datos
 
@@ -158,6 +173,9 @@ consumos_culturales %>%
 
 ```
 
+La opción [na.rm = TRUE]{.mark} nos permite descartar los casos que no son válidos o perdidos del cálculo, en este caso, del promedio.  
+
+
 `summarise` acepta toda una serie de estadísticos básicos que pueden utilizar:
 
 -   `mean()`: promedio
@@ -204,9 +222,9 @@ censo_sneep %>%
 
 Fíjense que utilizando los *pipes* es sencillo encadenar cada una de las funciones. Primero agrupamos la información por sexo y luego calculamos el promedio de edad. 
 
-Otro ejemplo que podemos realizar, utilizando los datos de la *Subsecretaría de Turismo*, es calcular la cantidad de turistas que han viajado por año a los distintos países destino clasificados. Recuerden que la base de turismo emisivo (y receptivo) se basa en un conteo de los turistas que salen (o entran) de Argentina por día y por medio de transporte. Nosotros vamos a *agregar los datos* para que obtengamos el valor por año, sin importar el medio de transporte de salida.  
+Otro ejemplo que podemos realizar, utilizando los datos de la *Subsecretaría de Turismo*, es calcular la cantidad de turistas que han viajado por año a los distintos países destino clasificados. Recuerden que la base de turismo emisivo (y receptivo) se basa en un conteo de los turistas que salen (o entran) de Argentina por día, por medio de transporte y por país de destino o de origen. Nosotros vamos a *agregar los datos* para que obtengamos el valor por año, sin importar el medio de transporte de salida.  
 
-Como el dato de la fecha se guarda en la variable `indice_tiempo` bajo el formato *aaaa-dd-mm*, nosotros a través de la función *year* de la librería `lubridate`. vamos a extraer únicamente el año y asignarlo a una nueva variable de nombre *anio*.  
+Como el dato de la fecha se guarda en la variable `indice_tiempo` bajo el formato *aaaa-dd-mm*, nosotros a través de la función *year* de la librería `lubridate` vamos a extraer únicamente el año y asignarlo a una nueva variable de nombre *anio*.  
 
 Entonces, recapitulando:  
 
@@ -225,6 +243,7 @@ turismo_emisivo %>%
 
 ```
 
+
 Si dejamos así el script, los cambios no se asignarán a nuestro objeto `turismo_emisivo`. Para hacerlo debemos asignarlo explicitamente a un nuevo objeto, para no sobreescribir la base original:  
 
 ```{r}
@@ -235,8 +254,10 @@ turismo_emisivo_aniopais <- turismo_emisivo %>%
 
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, eval=knitr::is_html_output()}
+
 DT::datatable(turismo_emisivo_aniopais)
+
 ```
 
 
@@ -270,7 +291,7 @@ censo_sneep %>%
 Fijense que para calcular el porcentaje, luego de aplicar *summarise* y obtener la cantidad de casos por categoría, debemos usar mutate, ya que vamos a crear una nueva columna sobre nueva base agregada que creamos.  
 
 
-**Porcentaje de personas que asisten a museos**: Calcularemos el porcentaje de personas que asisten a museos según nivel socio-económico. Para ello, utilizaremos la variable *pat1* y *nse_3*. Recordar que debemos utilizar el *ponderador* para realizar las estimaciones correctas.
+**Porcentaje de personas que asisten a museos (pág. 38)**: Calcularemos el porcentaje de personas que asisten a museos según nivel socio-económico. Para ello, utilizaremos la variable *pat1* y *nse_3*. Recordar que debemos utilizar el *ponderador* para realizar las estimaciones correctas.
 
 ```{r}
 
@@ -285,7 +306,7 @@ consumos_culturales %>%
 ¿Las estimaciones son correctas?  
 
 
-**Géneros mirados en plataformas**: Calcularemos el porcentaje de personas que miran contenidos audiovisuales en plataformas de streaming, agrupados por género. Para ello, utilizaremos la serie de variables comprendidas entre la *tv15_1* a *tv15_11* que indican si se mira o no cada género. Para cada variable, el valor 1 representa que la persona mira ese género y el valor 0 que no lo mira. Entonces, para calcular el porcentaje de personas que miran cada género, debemos:
+**Géneros mirados en plataformas (pág. 14)**: Calcularemos el porcentaje de personas que miran contenidos audiovisuales en plataformas de streaming, agrupados por género. Para ello, utilizaremos la serie de variables comprendidas entre la *tv15_1* a *tv15_11* que indican si se mira o no cada género. Para cada variable, el valor 1 representa que la persona mira ese género y el valor 0 que no lo mira. Entonces, para calcular el porcentaje de personas que miran cada género, debemos:
 
 ```{r}
 consumos_culturales %>% 
@@ -309,7 +330,7 @@ Luego veremos como presentar estos resultados en formato más ordenado, organiza
 **Cantidad de turismo emisivo en el mes de mayo de 2025 por país de destino**: En el [informe estadísticas de turismo de junio de 2025 de INDEC](https://www.indec.gob.ar/uploads/informesdeprensa/eti_06_256083EEBF86.pdf){target="_blank"} hay distintos datos respectos al turismo emisivo y receptivo del país. Vamos a calcular la cantidad de personas que en mayo viajó a distintos destinos clasificados. 
 Para hacer los cálculos, primero vamos a *extraer* el dato de mes y año, con la librería `lubridate` y lo vamos a asignar mediante *mutate* a dos nuevas variables. Eso lo asignaremos a un objeto con el mismo nombre (`turismo_emisivo`) para sobreescribirlo. Luego, ya podemos hacer los cálculos.  
 
-Para poder quedarnos únicamente con el mes de mayo y el año 2025 debemos aplicar un filtro, para luego si poder agrupar los datos. Finalmente haremos la sumatoria, adentro de cada país de destino, de la cantidad de viajes identificados en la variable *viajes_de_turistas_residentes*.  
+Para poder quedarnos únicamente con el mes de mayo y el año 2025 debemos aplicar un filtro, para luego poder agrupar los datos. Finalmente haremos la sumatoria, adentro de cada país de destino, de la cantidad de viajes identificados en la variable *viajes_de_turistas_residentes*.  
 
 
 ```{r}
