@@ -100,7 +100,7 @@ library(scales)
 Vamos a cargar las bases de datos que utilizaremos:
 
 ```{r }
-graduadxs_universit <- read_csv("https://datos.produccion.gob.ar/dataset/46df1ebe-d0bb-49a1-96dd-fe9751930682/resource/afbfc04e-6130-448c-953f-ef601f3e8bda/download/base_araucano.csv")
+graduadxs_universit <- read_csv("https://cdn.produccion.gob.ar/cdn-cep/araucano/base_araucano.csv")
 
 turismo_emisivo <- read_csv("https://datos.yvera.gob.ar/dataset/4cbf7d4a-702a-4911-8c1e-717a45214902/resource/fd710cb7-1981-43ea-aba3-7a14c356446b/download/turistas-residentes-serie.csv")
 ```
@@ -112,8 +112,16 @@ graduadxs_universit <- graduadxs_universit %>%
   filter(anio == 2021) %>% # Me quedo solo con los datos de 2021
   mutate(
     edad_egreso = anioegreso - anionac, # Calculo la edad al egreso
-    genero = factor(genero_id, labels = c("Mujer", "Varón")) # Transformo a factor la variable género
-  )
+    genero = factor(genero_id, labels = c("Mujer", "Varón")), # Transformo a factor la variable género
+    rama_f = factor(rama_id,   labels = c("Ciencias Sociales",
+                                          "Ciencias Aplicadas",
+                                          "Ciencias de la Salud",
+                                          "Ciencias Humanas",
+                                          "Ciencias Básicas",
+                                          "Sin Rama"
+                                          ))
+    )
+
 ```
 
 
@@ -148,234 +156,200 @@ Fijense que de forma similar al `%>%` de `dplyr`, en `ggplot2` utilizamos el `+`
 Dentro de la capa de geometría, podemos agregar argumentos que nos permitan personalizar el gráfico. Por ejemplo, cambiemos el color de las barras mediante la opción `fill` y el tamaño mediante la función `binwidth`. Pueden explorar las distintas formas de identificar las colores en este [sitio](https://r-graph-gallery.com/ggplot2-color.html).
 
 ```{r message=FALSE, warning=FALSE}
-graduadxs_universit %>% 
-  ggplot(aes(x = edad_egreso)) +
-  geom_histogram(fill = "skyblue", binwidth = 2)
+ggplot(data = graduadxs_universit, aes(x = edad_egreso)) +
+  geom_histogram(fill = "skyblue", binwidth = 1)
 ```
 Ahora el gráfico se ve algo mejor. Ahora veamos el tema de la escala. ¿Cómo podemos hacer para cambiar los intervalos y los límites tanto en el eje x como en el y. Vamos a utilizar las capas de *escalas* mediante las funciones `scale_x_continuous()` y `scale_y_continuous()`. Dentro de estas funciones, podemos indicar los intervalos (*breaks*) y los límites (*limits*) que queremos para cada eje. 
 
 ```{r message=FALSE, warning=FALSE}
-graduadxs_universit %>% 
-  ggplot(aes(x = edad_egreso)) +
-  geom_histogram(fill = "skyblue", binwidth = 2) +
+ggplot(data = graduadxs_universit, aes(x = edad_egreso)) +
+  geom_histogram(fill = "skyblue", binwidth = 1) +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
-  scale_y_continuous(breaks = seq(0, 50000, 10000), limits = c(0, 50000))
+  scale_y_continuous(breaks = seq(0, 30000,5000), limits = c(0, 30000))
 ```
 
-La opción `breaks = seq(15, 90, 5)` indica que queremos que los intervalos en el eje *x* sean de 5 en 5, desde 15 hasta 90. La opción `limits = c(15, 90)` indica que los límites del eje *x* serán de 15 a 90. De forma similar, para el eje *y*, los intervalos serán de 1000 en 1000, desde 0 hasta 10000. Los límites del eje *y* serán de 0 a 10000.
+La opción `breaks = seq(15, 70, 5)` indica que queremos que los intervalos en el eje *x* sean de 5 en 5, desde 15 hasta 90. La opción `limits = c(15, 70)` indica que los límites del eje *x* serán de 15 a 90. De forma similar, para el eje *y*, los intervalos serán de 5000 en 5000, desde 0 hasta 30000. Los límites del eje *y* serán de 0 a 30000.
 
 Ahora bien, para cerrar nuestro primer gráfico, vamos a agregarle un título y etiquetas a los ejes. Para ello, utilizaremos la función `labs()`. A su vez, podemos también modificar el tema visual del gráfico mediante la función `theme()`. Seleccionaremos el tema *minimal* mediante la capa `theme_minimal()`.  
 
 ```{r}
-graduadxs_universit %>% 
-  ggplot(aes(x = edad_egreso)) +
-  geom_histogram(fill = "skyblue", binwidth = 2) +
+ggplot(data = graduadxs_universit, aes(x = edad_egreso)) +
+  geom_histogram(fill = "skyblue", binwidth = 1) +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
-  scale_y_continuous(breaks = seq(0, 50000, 10000), limits = c(0, 50000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad. 2021.",
-       caption = "Fuente: elaboración propia en base Graduadxs Universitarios (Ministerio de Educación)",
+  scale_y_continuous(breaks = seq(0, 30000,5000), limits = c(0, 30000)) +
+  labs(title = "Distribución de graduadxs universitarios según edad. Argentina 2016-2018.",
+       caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas") +
   theme_minimal()
 
 ```
 
-Si queremos exportar el gráfico a un archivo, para luego utilizarlo en algún documento o compartirlo, podemos hacerlo mediante la función `ggsave()`. Esta función nos permite guardar el gráfico en distintos formatos, como `pdf`, `png`, `jpeg`, `tiff`, entre otros. Pero antes debemos asignar al gráfico a un... objeto. Probemos.
+Si queremos exportar el gráfico a un archivo, para luego utilizarlo en algún documento o compartirlo, podemos hacerlo mediante la función `ggsave()`. Esta función nos permite guardar el gráfico en distintos formatos, como `pdf`, `png`, `jpeg`, `tiff`, entre otros.  
+
 
 ```{r}
-grafico_edad <- censo_sneep %>% 
-  filter(edad > 0) %>% 
-  ggplot(aes(x = edad)) +
-  geom_histogram(fill = "skyblue", binwidth = 2) +
-  scale_x_continuous(breaks = seq(15, 90, 5), limits = c(15, 90)) +
-  scale_y_continuous(breaks = seq(0, 10000, 1000), limits = c(0, 10000)) +
-  labs(title = "Distribución de la población penitenciaria según edad. 2023.",
-       caption = "Fuente: elaboración propia en base SNEEP (Ministerio de Justicia)",
-       x = "Edad",
+ggplot(data = graduadxs_universit, aes(x = edad_egreso)) +
+  geom_histogram(fill = "skyblue", binwidth = 1) +
+  scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
+  scale_y_continuous(breaks = seq(0, 30000,5000), limits = c(0, 30000)) +
+  labs(title = "Distribución de graduadxs universitarios según edad. Argentina 2016-2018.",
+       caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
+       x = "Edad al egreso",
        y = "Cantidad de personas") +
   theme_minimal()
 
-ggsave("resultados/grafico_edad.jpeg", plot = grafico_edad, width = 8, height = 5, dpi = 300)
+ggsave("resultados/grafico_edad.jpeg", width = 8, height = 5, dpi = 300)
 
 ```
 
 
-## Observando diferencias por grupos  
+### Observando diferencias por grupos  
 
-Siguiendo con el gráfico que fuimos contruyendo, vamos a ver como hacer para comparar la distribución por edad según género. Para ello, vamos a utilizar la variable `genero`. El principal cambio que vamos a generar en nuestras capas es que en la opción *fill* de la capa `aes()` vamos a indicar que queremos diferenciar por género.  
+Siguiendo con el gráfico que fuimos contruyendo, vamos a ver como hacer para comparar la distribución por edad según rama científica. Para ello, vamos a utilizar la variable `rama_f`. El principal cambio que vamos a generar en nuestras capas es que en la opción *fill* de la capa `aes()` vamos a indicar que queremos diferenciar por rama.  
 
 
 ```{r}
-graduadxs_universit %>% 
-  ggplot(aes(x = edad_egreso, fill = genero)) +
-  geom_histogram(binwidth = 2, position = "identity") +
+ggplot(data = graduadxs_universit, aes(x = edad_egreso, fill = rama_f)) +
+  geom_histogram(binwidth = 1, position = "identity") +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
-  scale_y_continuous(breaks = seq(0, 50000, 10000), limits = c(0, 50000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad y género. 2021.",
-       caption = "Fuente: elaboración propia en base Graduadxs Universitarios (Ministerio de Educación )",
+  scale_y_continuous(breaks = seq(0, 11000,1000), limits = c(0, 11000)) +
+  labs(title = "Distribución de graduadxs universitarios según edad y rama. Argentina 2016-2018.",
+       caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas") +
   theme_minimal()
 ```
 
-Podríamos mejorar la gráfica retocando las siguientes opciones:
-
-- Cambiar el color de las barras utilizando la función `scale_fill_manual()`.
-- Modificar la transparencia de las barras mediante la opción *alpha* en `geom_histogram`.
-- Evitar la notación científica en el eje y mediante la capa `scale_y_continuous()` y la opción `labels = scales::label_number_auto()` .
+Podríamos mejorar la gráfica retocando la transparencia de las barras mediante la opción *alpha* en `geom_histogram` y definiendo el título de la leyenda en la capa `labs`.
 
 
 ```{r}
-censo_sneep %>% 
-  filter(edad > 0) %>% 
-  ggplot(aes(x = edad, fill = genero)) +
-  geom_histogram(binwidth = 2, position = "identity", alpha = 0.7) +
-  scale_x_continuous(breaks = seq(15, 90, 5), limits = c(15, 90)) +
-  scale_y_continuous(breaks = seq(0, 10000, 1000), limits = c(0, 10000),
-                     labels = scales::label_number_auto()) +
-  scale_fill_manual(values = c("skyblue", "coral", "purple", "green", "red")) +
-  labs(title = "Distribución de las población penitenciaria según edad y género. 2023.",
-       caption = "Fuente: elaboración propia en base SNEEP (Ministerio de Justicia)",
-       x = "Edad",
-       y = "Cantidad de personas") +
+ggplot(data = graduadxs_universit, aes(x = edad_egreso, fill = rama_f)) +
+  geom_histogram(binwidth = 1, position = "identity", alpha = 0.4) +
+  scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
+  scale_y_continuous(breaks = seq(0, 11000,1000), limits = c(0, 11000)) +
+  labs(title = "Distribución de graduadxs universitarios según edad y rama. Argentina 2016-2018.",
+       caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
+       x = "Edad al egreso",
+       y = "Cantidad de personas",
+       fill = "Rama científica") +
   theme_minimal()
 
 ```
 
-Otra forma de evaluar las diferenciaciones por grupos es mediante *facetados*. Vamos a ver cómo hacer para que el gráfico se divida en dos paneles, uno para cada sexo. Para ello, vamos a utilizar la función `facet_wrap()` y le pasaremos como argumento la variable `sexo`.  
-
-```{r message=FALSE, warning=FALSE}
-ggplot(censo_personas, aes(x = p03)) +
-  geom_histogram(binwidth = 2, fill = "coral") +
-  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
-  scale_y_continuous(breaks = seq(0, 800000, 100000), limits = c(0, 800000),
-                     labels = scales::label_number_auto()) +
-  labs(title = "Distribución de las personas según edad y sexo",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Edad",
-       y = "Cantidad de personas") +
-  theme_minimal() +
-  facet_wrap(~sexo)
-```
-## Los gráficos de barras 
-
-Uno de los gráficos más utilizados en ciencias sociales para observar la distribución de las variables categóricas son los gráficos de barras. Por ejemplo, podemos construir un gráfico que nos muestre como se distribuye la población según su condición de actividad (`condact_f`). 
-
-Como vamos a querer que los valores del eje y se presenten en porcentajes, primero vamos a calcular la proporción de personas en cada categoría. Para ello, utilizaremos la función `count()` de `dplyr` y luego dividiremos por la cantidad total de personas. También quitaremos del calculo a las personas que no aplican a la condición de actividad. Asignemos la tabla de salida al objeto *condicion*.
+Otra forma de evaluar las diferenciaciones por grupos es mediante *facetados*. Vamos a ver cómo hacer para que el gráfico se divida en dos paneles, uno para cada sexo. Para ello, vamos a utilizar la función `facet_wrap()` y le pasaremos como argumento la variable `genero`.  
 
 ```{r}
-condicion <- censo_personas %>% 
-  filter(condact_f != "No aplica") %>% 
-  count(condact_f) %>%
-  mutate(prop = n / sum(n)) 
+ggplot(data = graduadxs_universit, aes(x = edad_egreso, fill = rama_f)) +
+  geom_histogram(binwidth = 1, position = "identity", alpha = 0.4) +
+  scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
+  scale_y_continuous(breaks = seq(0, 7000,1000), limits = c(0, 7000)) +
+  labs(title = "Distribución de graduadxs universitarios según edad y géramargentina 2016-2018.",
+       caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
+       x = "Edad al egreso",
+       y = "Cantidad de personas",
+       fill = "Rama científica") +
+  theme_minimal() +
+  facet_wrap(~genero)
+
 ```
 
-Ahora estamos en condiciones de probar la función `geom_bar` para construir un gráfico de barras. Es importante declarar `stat = "identity"` para que las barras se muestren en función de la proporción de personas en cada categoría. 
+## Gráficos de tendencias  
 
+Ahora vamos a construir un gráfico de tendencias que nos permita observar, utilizando la base de datos de **Turismo emisivo**, cómo ha evolucionado la salida de turistas desde argentina entre 2016 y 2025. Para ello, nuevamente, vamos a construir primero una tabla en donde tengamos agrupada la cantidad de salidas por año-mes, utilizando las funciones `group_by` y `summarise` combinadas.  
+
+Una vez construida la tabla, mediante el %>% podemos continuar con la construcción del gráfico mediante `ggplot`. En la estética indicaremos que nuestro eje [x]{.mark} es la variable *indice_tiempo* y el eje [y]{.mark} es *cantidad*. La geometría que utilizaremos aquí será `geom_line`.  
 
 ```{r}
-ggplot(data = condicion, aes(x = condact_f, y = prop)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
-  labs(title = "Distribución de la población según condición de actividad",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Condición de actividad",
-       y = "Proporción de personas") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::percent_format())
-```
-
-Ahora bien, existen otros formatos de gráficos de barras que nos permiten representar un cruce de variables, tal cómo lo hicimos en la clase anterior al elaborar tablas de contingencia. Por ejemplo, podemos construir un gráfico de barras agrupadas que nos muestre la distribución de la población según condición de actividad y sexo. Para ello, vamos a pasar en la capa `aes()` en la opción `fill`, la variable `sexo`. Al mismo tiempo, en la capa `geom_bar` indicaremos la opción `position = "dodge"`. 
-
-```{r message=FALSE, warning=FALSE}
-condicion_sexo <- censo_personas %>% 
-  filter(condact_f != "No aplica") %>% 
-  count(condact_f, sexo) %>%
-  group_by(condact_f) %>%
-  mutate(prop = n / sum(n))
-
-ggplot(data = condicion_sexo, aes(x = condact_f, y = prop, fill = sexo)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(title = "Distribución de la población según condición de actividad y sexo",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Condición de actividad",
-       y = "Proporción de personas") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::percent_format())
-```
-
-La otra opción es utilizar *barras apiladas*. Para ello, en la capa `geom_bar` indicaremos la opción `position = "fill"`. 
-
-```{r message=FALSE, warning=FALSE}
-ggplot(data = condicion_sexo, aes(x = condact_f, y = prop, fill = sexo)) +
-  geom_bar(stat = "identity", position = "fill") +
-  labs(title = "Distribución de la población según condición de actividad y sexo",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Condición de actividad",
-       y = "Proporción de personas") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::percent_format())
+turismo_emisivo %>% 
+  group_by(indice_tiempo) %>% 
+  summarise(cantidad = sum(viajes_de_turistas_residentes)) %>% 
+  ggplot(aes(x = indice_tiempo, y = cantidad)) +
+  geom_line()
 
 ```
+Si bien el gráfico ya es bastante claro en lo que quiere transmitir, podemos seguir mejorándolo:  
 
-Si además queremos agregar una capa de texto con el valor de la proporción de personas en cada categoría, podemos hacerlo mediante la función `geom_text()`. En esta función, le pasaremos como argumento la opción `label = scales::percent(prop)`, que nos permitirá mostrar el valor de la proporción en formato porcentaje. 
-
-```{r message=FALSE, warning=FALSE}
-ggplot(data = condicion_sexo, aes(x = condact_f, y = prop, fill = sexo)) +
-  geom_bar(stat = "identity", position = "fill") +
-  geom_text(aes(label = scales::percent(prop)), position = position_fill(vjust = 0.5)) +
-  labs(title = "Distribución de la población según condición de actividad y sexo",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Condición de actividad",
-       y = "Proporción de personas") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::percent_format())
-
-```
-
-Los gráficos de barras apiladas son un recurso importante para comparar proporciones entre grupos. Sin embargo, es importante tener en cuenta que a medida que aumenta la cantidad de grupos, la lectura de los gráficos se vuelve más compleja. Por ello, es importante tener en cuenta el objetivo de la visualización y la cantidad de grupos a comparar. Aun así, siempre está la opción de girar las coordenadas del gráfico. Por ejemplo, hagamos una prueba calculando las proporciones de personas según condición de actividad pero segun la provincia de residencia.
+- Mediante `scale_x_date` podemos mejorar la escala del eje *x* para que los intervalos sean de 6 meses y el formato de la fecha sea año-mes.  
+- Mediante `theme` podemos rotar los textos del eje *x* para que se vean mejor.  
+- Agregaremos títulos y fuente
 
 ```{r}
-condicion_provincia <- censo_personas %>% 
-  filter(condact_f != "No aplica") %>% 
-  group_by(provincia_f, condact_f) %>%
-  tally() %>% 
-  group_by(provincia_f) %>%
-  mutate(prop = n / sum(n))
-
-ggplot(data = condicion_provincia, aes(x = provincia_f, y = prop, fill = condact_f)) +
-  geom_bar(stat = "identity", position = "fill") +
-  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), position = position_fill(vjust = 0.5), size = 2) +
-  labs(title = "Distribución de la población según condición de actividad y provincia de residencia",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Condición de actividad",
-       y = "Proporción de personas",
-       fill = "Condición de actividad") +
-  theme_minimal() +
-  scale_y_continuous(labels = scales::percent_format()) +
-  coord_flip()
+turismo_emisivo %>% 
+  group_by(indice_tiempo) %>% 
+  summarise(cantidad = sum(viajes_de_turistas_residentes)) %>% 
+  ggplot(aes(x = indice_tiempo, y = cantidad)) +
+  geom_line() +
+  scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m") +
+  labs(
+    title = "Evolución del turismo emisivo. 2016-2025.",
+    caption = "Fuente: elaboración propia en base a datos de Yvera.gob.ar",
+    x = "Año-Mes",
+    y = "Cantidad de turistas residentes"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
 ```
 
-Si bien el gráfico se comprende, aún podemos hacerle algunas mejorar. Marcaremos los cambiamos que agregamos en el código:
+Ahora el gráfico tiene un mejor aspecto y ya nos permite comprender como los ciclos económicos del país pueden verse expresados en la las fluctuaciones del turismo emisivo.  
+
+Aun podemos agregar detalles que mejorarán el aspecto del gráfico. Por ejemplo, podemos remarcar con un color distintos el momento de la pandemia en donde el turismo alcanzó los niveles más bajos, durante 2020 y 2022. También, podemos identificar con puntos los momentos de mayor turismo emisivo y agregar una etiqueta que explique, brevemente, a qué se debió.  
+
+- Con la función `annotate` podemos agregar un rectángulo que marque el período de la pandemia y podemos escribir texto en los lugares del gráfico que necesitemos.
+- Con `geom_point` podemos agregar puntos en los momentos de mayor turismo emisivo, filtrando aquellos que nos interesan.
 
 ```{r}
-ggplot(data = condicion_provincia, aes(x = provincia_f, y = prop, fill = condact_f)) +
-  geom_bar(stat = "identity", position = "fill") +
-  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), position = position_fill(vjust = 0.5), size = 2) +
-  labs(title = "Distribución de la población según condición de \nactividad y provincia de residencia",
-       caption = "Fuente: elaboración propia en base Censo de Población, Hogares y Viviendas 2010 (INDEC)",
-       x = "Condición de actividad",
-       y = "Proporción de personas",
-       fill = "Condición de actividad") +
-  theme_minimal() +
-  theme(legend.position = "bottom", #Cambiamos la posición de la leyenda
-        legend.title = element_blank(), #Quitamos el título de la leyenda
-        axis.title.y = element_blank(), #Quitamos el título del eje y
-        axis.title.x = element_blank(), #Quitamos el título del eje x
-        axis.text.y = element_text(size = 7), #Cambiamos el tamaño de la fuente del eje y
-        title = element_text(size = 10)) + #Cambiamos el tamaño de la fuente del título
-  scale_y_continuous(labels = scales::percent_format()) +
-  coord_flip()
+turismo_emisivo %>% 
+  group_by(indice_tiempo) %>% 
+  summarise(cantidad = sum(viajes_de_turistas_residentes)) %>% 
+  ggplot(aes(x = indice_tiempo, y = cantidad)) +
+  geom_line() +
+  annotate(
+    "rect", xmin = as.Date("2020-03-01"), xmax = as.Date("2021-10-01"),
+    ymin = -Inf, ymax = Inf, alpha = 0.2, fill = "red"
+  ) +
+  annotate("text", x = as.Date("2020-12-01"), y = 800000, label = "Pandemia", color = "red", size = 3) +
+  geom_point(data = subset(turismo_emisivo %>% 
+                             filter(indice_tiempo %in% c("2025-01-01", "2018-01-01")) %>%
+                             group_by(indice_tiempo) %>% 
+                             summarise(cantidad = sum(viajes_de_turistas_residentes))),
+             aes(x = indice_tiempo, y = cantidad), color = "red", size = 2) +
+  annotate("text", x = as.Date("2023-01-01"), y = 2000000, label = "Apreciación cambiaria Milei", color = "red", size = 3, hjust = 0) +
+  annotate("text", x = as.Date("2018-02-01"), y = 2000000, label = "Apreciación cambiaria Macri", color = "red", size = 3, hjust = 0) +
+  scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m") +
+  labs(
+    title = "Evolución del turismo emisivo. 2016-2025.",
+    caption = "Fuente: elaboración propia en base a datos de Yvera.gob.ar",
+    x = "Año-Mes",
+    y = "Cantidad de turistas residentes"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
 ```
+
+```{r}
+turismo_emisivo %>%
+  filter(pais_destino %in% c("Chile", "Brasil")) %>% 
+  group_by(indice_tiempo, pais_destino) %>% 
+  summarise(cantidad = sum(viajes_de_turistas_residentes)) %>% 
+  ggplot(aes(x = indice_tiempo, y = cantidad, color = pais_destino)) +
+  geom_line() +
+  scale_x_date(date_breaks = "6 months", date_labels = "%Y-%m") +
+  labs(
+    title = "Evolución del turismo emisivo. 2016-2025.",
+    caption = "Fuente: elaboración propia en base a datos de Yvera.gob.ar",
+    x = "Año-Mes",
+    y = "Cantidad de turistas residentes",
+    color = "País de destino"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+ 
 
 
 
