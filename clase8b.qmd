@@ -1,0 +1,64 @@
+---
+title: "Clase 8b - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+author: "Albano Vergara Parra - José Rodríguez de la Fuente"
+institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
+lang: es
+format: 
+  html:
+    theme: journal
+    toc: true
+    toc-title: Contenido
+    number-sections: true
+    embed-resources: true
+    smooth-scroll: true
+    code-overflow: wrap
+    code-copy: hover
+    code-tools: false
+    code-annotations: hover
+    lightbox: true
+    fig-dpi: 300
+  pdf: 
+    toc: true
+    pdf-engine: xelatex
+    fig-format: png  
+    fig-dpi: 300     
+    fig-width: 8
+    fig-height: 5
+    highlight-style: espresso
+    include-in-header: 
+       text: |
+         \usepackage{fvextra}
+         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+         \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
+highlight-style: espresso
+cache: false
+prefer-html: true
+bibliography: references.bib
+execute:
+  warning: false
+  message: false
+---
+
+
+# Introducción a mapas
+
+```{r}
+pacman::p_load(tidyverse, sf, leaflet)
+install.packages('geoAr')
+library(geoAr)
+
+estab_produc <- read_csv("https://cdn.produccion.gob.ar/cdn-cep/establecimientos-productivos/distribucion_establecimientos_productivos_sexo.csv")
+
+argentina <- get_geo(geo = "ARGENTINA", level = "provincia")
+
+empresas <- st_as_sf(estab_produc, coords = c("lon", "lat"), crs = 4326)
+
+ggplot() +
+  geom_sf(data = argentina, fill = "lightgrey") +
+  geom_sf(data = empresas, aes(color = proporcion_mujeres), alpha = 0.5, size = 0.1) +
+  scale_color_viridis_c() +
+  theme_minimal()
+
+
+```
+

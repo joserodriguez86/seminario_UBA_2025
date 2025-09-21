@@ -1,5 +1,5 @@
 ---
-title: "Clase 8 - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
+title: "Clase 8a - Introducción al uso y aplicación de paquetes estadísticos para el tratamiento de fuentes de información en investigación social cuantitativa"
 author: "Albano Vergara Parra - José Rodríguez de la Fuente"
 institute: "Doctorado en Ciencias Sociales - Universidad de Buenos Aires"
 lang: es
@@ -16,6 +16,7 @@ format:
     code-tools: false
     code-annotations: hover
     lightbox: true
+    fig-dpi: 300
   pdf: 
     toc: true
     pdf-engine: xelatex
@@ -30,9 +31,9 @@ format:
          \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
          \DefineVerbatimEnvironment{OutputCode}{Verbatim}{breaklines,commandchars=\\\{\}}
 highlight-style: espresso
-cache: false
+cache: true
 prefer-html: true
-bibliography: referencias.bib
+bibliography: references.bib
 execute:
   warning: false
   message: false
@@ -103,6 +104,8 @@ Vamos a cargar las bases de datos que utilizaremos:
 graduadxs_universit <- read_csv("https://cdn.produccion.gob.ar/cdn-cep/araucano/base_araucano.csv")
 
 turismo_emisivo <- read_csv("https://datos.yvera.gob.ar/dataset/4cbf7d4a-702a-4911-8c1e-717a45214902/resource/fd710cb7-1981-43ea-aba3-7a14c356446b/download/turistas-residentes-serie.csv")
+
+consumos_culturales <- read_csv("https://datos.cultura.gob.ar/dataset/251c2ac2-e670-451c-9dbf-a4212af225b5/resource/b635d1fc-2161-4901-a21d-7f93d56d99a4/download/base-datos-encc-2022-2023.csv")
 ```
 
 Para la construcción de los gráficos vamos a transformar y crear algunas variables siguiendo los procedimientos aprendidos hasta ahora.
@@ -177,7 +180,8 @@ ggplot(data = graduadxs_universit, aes(x = edad_egreso)) +
   geom_histogram(fill = "skyblue", binwidth = 1) +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
   scale_y_continuous(breaks = seq(0, 30000,5000), limits = c(0, 30000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad. Argentina 2016-2018.",
+  labs(title = "Distribución de graduadxs universitarios según edad.",
+       subtitle = "Argentina 2016-2018.",
        caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas") +
@@ -193,7 +197,8 @@ ggplot(data = graduadxs_universit, aes(x = edad_egreso)) +
   geom_histogram(fill = "skyblue", binwidth = 1) +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
   scale_y_continuous(breaks = seq(0, 30000,5000), limits = c(0, 30000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad. Argentina 2016-2018.",
+  labs(title = "Distribución de graduadxs universitarios según edad.",
+       subtitle = "Argentina 2016-2018.",
        caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas") +
@@ -214,7 +219,8 @@ ggplot(data = graduadxs_universit, aes(x = edad_egreso, fill = rama_f)) +
   geom_histogram(binwidth = 1, position = "identity") +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
   scale_y_continuous(breaks = seq(0, 11000,1000), limits = c(0, 11000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad y rama. Argentina 2016-2018.",
+  labs(title = "Distribución de graduadxs universitarios según edad y rama.",
+       subtitle = "Argentina 2016-2018.",
        caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas") +
@@ -229,7 +235,8 @@ ggplot(data = graduadxs_universit, aes(x = edad_egreso, fill = rama_f)) +
   geom_histogram(binwidth = 1, position = "identity", alpha = 0.4) +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
   scale_y_continuous(breaks = seq(0, 11000,1000), limits = c(0, 11000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad y rama. Argentina 2016-2018.",
+  labs(title = "Distribución de graduadxs universitarios según edad y rama.",
+       subtitle = "Argentina 2016-2018.",
        caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas",
@@ -245,7 +252,8 @@ ggplot(data = graduadxs_universit, aes(x = edad_egreso, fill = rama_f)) +
   geom_histogram(binwidth = 1, position = "identity", alpha = 0.4) +
   scale_x_continuous(breaks = seq(15, 70, 5), limits = c(15, 70)) +
   scale_y_continuous(breaks = seq(0, 7000,1000), limits = c(0, 7000)) +
-  labs(title = "Distribución de graduadxs universitarios según edad y géramargentina 2016-2018.",
+  labs(title = "Distribución de graduadxs universitarios según edad y género.",
+       subtitle = "Argentina 2016-2018.",
        caption = "Fuente: elaboración propia en base a Sistema Araucano de la Secretaría de Políticas Universitarias (SPU)",
        x = "Edad al egreso",
        y = "Cantidad de personas",
@@ -350,6 +358,147 @@ turismo_emisivo %>%
   )
 ```
  
+## Gráficos de barras  
+
+Uno de los gráficos más utilizados en ciencias sociales para observar la distribución de las variables categóricas son los gráficos de barras. Por ejemplo, a partir de los datos agregados que generamos en la clase 5 utilizando la base de datos de la **Encuesta de Consumos Culturales 2022-2023**, podemos reconstruir el gráfico de la página 14 del informe de dicha encuesta. Este gráfico nos muestra, a través de barras, el porcentaje de personas que consumen los distintos tipos de géneros en plataformas digitales.   
+
+Como vamos a querer que los valores del [eje y]{.mark} se presenten en porcentajes, primero vamos a calcular la proporción de personas en cada categoría. Para ello, utilizaremos la función `summarise` de `dplyr`. Asignaremos la nueva tabla agregada al objeto **plataformas**.  
+
+```{r}
+plataformas <- consumos_culturales %>% 
+  summarise(accion_aventura = sum(ponderador[tv15_1 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            ciencia_ficcion = sum(ponderador[tv15_2 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            suspenso = sum(ponderador[tv15_3 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            terror = sum(ponderador[tv15_4 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            drama = sum(ponderador[tv15_5 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            comedia = sum(ponderador[tv15_6 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            romantico = sum(ponderador[tv15_7 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            documental = sum(ponderador[tv15_8 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            infantiles = sum(ponderador[tv15_9 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            entretenimiento_reality = sum(ponderador[tv15_10 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            animacion = sum(ponderador[tv15_11 == 1], na.rm = T) / sum(ponderador, na.rm = T))
+```
+
+Sin embargo, para poder graficar con `ggplot2`, necesitamos que la tabla esté en formato *largo*. Por ello, vamos a utilizar la función `pivot_longer` de `tidyr`. En esta función, le pasaremos como argumento las columnas que queremos transformar a formato largo, el nombre de la nueva columna que contendrá los nombres de las categorías y el nombre de la nueva columna que contendrá los valores de proporción. 
+
+```{r}
+plataformas <- plataformas %>% 
+  pivot_longer(cols = everything(), 
+               names_to = "genero", 
+               values_to = "prop")
+```
 
 
+Ahora estamos en condiciones de probar la función `geom_bar` para construir un gráfico de barras. Es importante declarar `stat = "identity"` para que las barras se muestren en función de la proporción de personas en cada categoría. 
+
+
+```{r}
+ggplot(data = plataformas, aes(x = genero, y = prop)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Distribución de la población según género preferido en plataformas digitales",
+       caption = "Fuente: elaboración propia en base a Encuesta de Consumos Culturales 2022-2023",
+       x = "Género",
+       y = "Proporción de personas") +
+  theme_minimal() +
+  scale_y_continuous(labels = percent_format())
+
+```
+
+Como las etiquetas de las columnas se solapan entre sí, lo mejor es invertir el eje [x]{.mark} y el eje [y]{.mark} mediante la función `coord_flip`. Además podemos ordenar las barras en dirección descendente con la función `reorder` en la parte de la estética.  
+
+```{r}
+ggplot(data = plataformas, aes(x = reorder(genero, prop), y = prop)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Distribución de la población según género preferido en plataformas digitales",
+       caption = "Fuente: elaboración propia en base a Encuesta de Consumos Culturales 2022-2023",
+       x = "Género",
+       y = "Proporción de personas") +
+  theme_minimal() +
+  scale_y_continuous(labels = percent_format()) +
+  coord_flip()
+```
+
+
+Ahora bien, existen otros formatos de gráficos de barras que nos permiten representar un cruce de variables, tal cómo lo hicimos en la clase anterior al elaborar tablas de contingencia. Por ejemplo, podríamos preguntarnos si el gusto por determinados géneros varía por género. Para ello, primero vamos a calcular los porcentajes por género. Luego, vamos a pasar en la capa `aes()` en la opción `fill`, la variable `genero`. Al mismo tiempo, en la capa `geom_bar` indicaremos la opción `position = "dodge"`. 
+
+```{r}
+plataformas <- consumos_culturales %>% 
+  filter(genero != "No binario") %>% 
+  group_by(genero) %>% 
+  summarise(accion_aventura = sum(ponderador[tv15_1 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            ciencia_ficcion = sum(ponderador[tv15_2 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            suspenso = sum(ponderador[tv15_3 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            terror = sum(ponderador[tv15_4 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            drama = sum(ponderador[tv15_5 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            comedia = sum(ponderador[tv15_6 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            romantico = sum(ponderador[tv15_7 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            documental = sum(ponderador[tv15_8 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            infantiles = sum(ponderador[tv15_9 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            entretenimiento_reality = sum(ponderador[tv15_10 == 1], na.rm = T) / sum(ponderador, na.rm = T),
+            animacion = sum(ponderador[tv15_11 == 1], na.rm = T) / sum(ponderador, na.rm = T)) %>% 
+  pivot_longer(cols = -genero, 
+               names_to = "genero_plataforma", 
+               values_to = "prop")
+
+plataformas %>% 
+  ggplot(aes(x = reorder(genero_plataforma, prop), y = prop, fill = genero)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Distribución de la población según género preferido en plataformas digitales y sexo",
+       caption = "Fuente: elaboración propia en base a Encuesta de Consumos Culturales 2022-2023",
+       x = "Género",
+       y = "Proporción de personas",
+       fill = "Sexo") +
+  theme_minimal() +
+  scale_y_continuous(labels = percent_format()) +
+  coord_flip()
+
+```
+
+La otra opción es utilizar *barras apiladas*. Para ello, en la capa `geom_bar` indicaremos la opción `position = "fill"`. 
+
+```{r}
+plataformas %>% 
+  ggplot(aes(x = reorder(genero_plataforma, prop), y = prop, fill = genero)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Distribución de la población según género preferido en plataformas digitales y sexo",
+       caption = "Fuente: elaboración propia en base a Encuesta de Consumos Culturales 2022-2023",
+       x = "Género",
+       y = "Proporción de personas",
+       fill = "Sexo") +
+  theme_minimal() +
+  scale_y_continuous(labels = percent_format()) +
+  coord_flip()
+
+```
+
+Si además queremos agregar una capa de texto con el valor de la proporción de personas en cada categoría, podemos hacerlo mediante la función `geom_text()`. En esta función, le pasaremos como argumento la opción `label = percent(prop)`, que nos permitirá mostrar el valor de la proporción en formato porcentaje. 
+
+Por otro lado, si queremos que las etiquetas de los distintos géneros se muestren en forma apropiada, podemos indicarlo a traves de la capa `scale_x_discrete`, utilizando la opción *labels*.
+
+```{r}
+plataformas %>% 
+  ggplot(aes(x = reorder(genero_plataforma, prop), y = prop, fill = genero)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = scales::percent(prop, accuracy = 0.1)), position = position_fill(vjust = 0.5), size = 3) +
+  labs(title = "Distribución de la población según género preferido en plataformas digitales y sexo",
+       caption = "Fuente: elaboración propia en base a Encuesta de Consumos Culturales 2022-2023",
+       x = "Género",
+       y = "Proporción de personas",
+       fill = "Sexo") +
+  theme_minimal() +
+  scale_y_continuous(labels = percent_format()) +
+  scale_x_discrete(labels = c("accion_aventura" = "Acción/Aventura",
+                               "ciencia_ficcion" = "Ciencia ficción",
+                               "suspenso" = "Suspenso",
+                               "terror" = "Terror",
+                               "drama" = "Drama",
+                               "comedia" = "Comedia",
+                               "romantico" = "Romántico",
+                               "documental" = "Documental",
+                               "infantiles" = "Infantiles",
+                               "entretenimiento_reality" = "Entretenimiento/Reality",
+                               "animacion" = "Animación")) +
+  coord_flip()
+
+```
 
