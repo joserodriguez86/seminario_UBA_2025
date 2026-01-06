@@ -51,4 +51,5 @@ Acceso directo a los contenidos de cada clase:
 
 Para consultas sobre el material:  
 📧 *[jrodriguez@conicet.gov.ar]*
+📧 *[albano.vergara@gmail.com]*
 
